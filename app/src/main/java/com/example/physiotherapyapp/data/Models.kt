@@ -14,15 +14,29 @@ data class Exercise(
 )
 
 /**
- * Seans modelini temsil eder
+ * Seans şablonu modelini temsil eder (kayıtlı seans planları)
+ */
+data class SessionTemplate(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
+    val exercises: List<Exercise>,
+    val createdDate: Date = Date(),
+    val estimatedDuration: String = "${exercises.size * 5} dk" // Her egzersiz için 5 dk tahmin
+)
+
+/**
+ * Aktif/Tamamlanmış seans modelini temsil eder
  */
 data class Session(
     val id: String = UUID.randomUUID().toString(),
+    val templateId: String,
+    val templateName: String,
     val exercises: List<Exercise>,
     val startDate: Date = Date(),
     val endDate: Date? = null,
     val isCompleted: Boolean = false,
-    val pointsEarned: Int = 0
+    val pointsEarned: Int = 0,
+    val currentExerciseIndex: Int = 0
 )
 
 /**

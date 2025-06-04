@@ -4,11 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.physiotherapyapp.components.BottomNavigationBar
 import com.example.physiotherapyapp.navigation.NavigationRoutes
 import com.example.physiotherapyapp.screens.*
 import com.example.physiotherapyapp.ui.theme.PhysiotherapyAppTheme
@@ -36,6 +42,7 @@ class MainActivity : ComponentActivity() {
  * Ana uygulama Composable fonksiyonu
  * Navigation ve tüm ekranların yönetimini sağlar
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhysiotherapyApp() {
     // Navigation controller
@@ -47,108 +54,131 @@ fun PhysiotherapyApp() {
     // ViewModel state'lerini observe et
     val user by viewModel.user
     val currentSession by viewModel.currentSession
-    val currentExerciseIndex by viewModel.currentExerciseIndex
+    val sessionTemplates = viewModel.sessionTemplates
     val completedSessions = viewModel.completedSessions
     
-    // Navigation Host - tüm ekranları yönetir
-    NavHost(
-        navController = navController,
-        startDestination = NavigationRoutes.LOGIN
-    ) {
-        // Giriş Ekranı
-        composable(NavigationRoutes.LOGIN) {
-            LoginScreen(
-                onContinueClick = {
-                    navController.navigate(NavigationRoutes.HOME) {
-                        // Login ekranını stack'ten kaldır
-                        popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
+    // Mevcut route'u kontrol et
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    
+    // Bottom navigation gerektiren route'lar
+    val bottomNavRoutes = listOf(
+        NavigationRoutes.MAIN_HOME,
+        NavigationRoutes.MAIN_WORKOUT,
+        NavigationRoutes.MAIN_HISTORY,
+        NavigationRoutes.MAIN_PROFILE
+    )
+    
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            // Sadece ana ekranlarda bottom navigation göster
+            if (currentRoute in bottomNavRoutes) {
+                BottomNavigationBar(navController = navController)
+            }
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = NavigationRoutes.LOGIN,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            // Giriş Ekranı
+            composable(NavigationRoutes.LOGIN) {
+                LoginScreen(
+                    onContinueClick = {
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            // Login ekranını stack'ten kaldır
+                            popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
-        
-        // Ana Ekran
-        composable(NavigationRoutes.HOME) {
-            HomeScreen(
-                onExerciseSelectionClick = {
-                    navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
-                },
-                onSessionHistoryClick = {
-                    navController.navigate(NavigationRoutes.SESSION_HISTORY)
-                },
-                onProfileClick = {
-                    navController.navigate(NavigationRoutes.PROFILE)
-                }
-            )
-        }
-        
-        // Egzersiz Seçimi Ekranı
-        composable(NavigationRoutes.EXERCISE_SELECTION) {
-            ExerciseSelectionScreen(
-                availableExercises = viewModel.availableExercises,
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                onStartSession = { selectedExercises ->
-                    viewModel.startSession(selectedExercises)
-                    navController.navigate(NavigationRoutes.SESSION) {
-                        // Egzersiz seçimi ekranını stack'ten kaldır
-                        popUpTo(NavigationRoutes.HOME)
+                )
+            }
+            
+            // Ana Ekran (Dashboard)
+            composable(NavigationRoutes.MAIN_HOME) {
+                HomeScreen(
+                    user = user,
+                    recentTemplates = sessionTemplates,
+                    onCreateNewSession = {
+                        navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
                     }
-                }
-            )
-        }
-        
-        // Aktif Seans Ekranı
-        composable(NavigationRoutes.SESSION) {
-            SessionScreen(
-                session = currentSession,
-                currentExerciseIndex = currentExerciseIndex,
-                isCurrentExerciseCompleted = viewModel.isCurrentExerciseCompleted(),
-                areAllExercisesCompleted = viewModel.areAllExercisesCompleted(),
-                onStartExercise = {
-                    // Başlat butonuna basıldığında doğrudan tamamlanmış olarak işaretle
-                    // (Gerçek uygulamada burada timer olabilir)
-                    viewModel.completeCurrentExercise()
-                },
-                onCompleteExercise = {
-                    viewModel.completeCurrentExercise()
-                },
-                onCompleteSession = {
-                    viewModel.completeSession()
-                    navController.navigate(NavigationRoutes.HOME) {
-                        // Seans ekranını stack'ten kaldır
-                        popUpTo(NavigationRoutes.HOME) { inclusive = true }
+                )
+            }
+            
+            // Egzersiz Yap Ekranı
+            composable(NavigationRoutes.MAIN_WORKOUT) {
+                WorkoutScreen(
+                    sessionTemplates = sessionTemplates,
+                    onStartSession = { template ->
+                        viewModel.startSessionFromTemplate(template)
+                        navController.navigate(NavigationRoutes.SESSION)
+                    },
+                    onCreateNewSession = {
+                        navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
+                    },
+                    onDeleteSession = { templateId ->
+                        viewModel.deleteSessionTemplate(templateId)
                     }
-                },
-                onCancelSession = {
-                    viewModel.cancelSession()
-                    navController.navigate(NavigationRoutes.HOME) {
-                        // Seans ekranını stack'ten kaldır
-                        popUpTo(NavigationRoutes.HOME) { inclusive = true }
+                )
+            }
+            
+            // Seans Geçmişi Ekranı
+            composable(NavigationRoutes.MAIN_HISTORY) {
+                SessionHistoryScreen(
+                    completedSessions = completedSessions,
+                    onBackClick = { /* Bottom nav kullanıldığı için geri buton yok */ }
+                )
+            }
+            
+            // Profil Ekranı
+            composable(NavigationRoutes.MAIN_PROFILE) {
+                ProfileScreen(
+                    user = user,
+                    onBackClick = { /* Bottom nav kullanıldığı için geri buton yok */ }
+                )
+            }
+            
+            // Yeni Seans Oluşturma Ekranı
+            composable(NavigationRoutes.EXERCISE_SELECTION) {
+                CreateSessionScreen(
+                    availableExercises = viewModel.availableExercises,
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onCreateSession = { name, exercises ->
+                        viewModel.createSessionTemplate(name, exercises)
+                        navController.popBackStack()
                     }
-                }
-            )
-        }
-        
-        // Seans Geçmişi Ekranı
-        composable(NavigationRoutes.SESSION_HISTORY) {
-            SessionHistoryScreen(
-                completedSessions = completedSessions,
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        
-        // Profil Ekranı
-        composable(NavigationRoutes.PROFILE) {
-            ProfileScreen(
-                user = user,
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
+                )
+            }
+            
+            // Aktif Seans Ekranı
+            composable(NavigationRoutes.SESSION) {
+                SessionScreen(
+                    session = currentSession,
+                    isCurrentExerciseCompleted = viewModel.isCurrentExerciseCompleted(),
+                    areAllExercisesCompleted = viewModel.areAllExercisesCompleted(),
+                    onStartExercise = {
+                        // Başlat butonuna basıldığında doğrudan tamamlanmış olarak işaretle
+                        // (Gerçek uygulamada burada timer olabilir)
+                        viewModel.completeCurrentExercise()
+                    },
+                    onCompleteExercise = {
+                        viewModel.completeCurrentExercise()
+                    },
+                    onCompleteSession = {
+                        viewModel.completeSession()
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            // Seans ekranını stack'ten kaldır
+                            popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
+                        }
+                    },
+                    onCancelSession = {
+                        viewModel.cancelSession()
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }

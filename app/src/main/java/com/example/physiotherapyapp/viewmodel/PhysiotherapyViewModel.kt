@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.physiotherapyapp.data.Exercise
 import com.example.physiotherapyapp.data.Session
+import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
 import java.util.Date
 
@@ -18,13 +19,13 @@ class PhysiotherapyViewModel : ViewModel() {
     private val _user = mutableStateOf(User())
     val user = _user
     
-    // Mevcut seans bilgileri
+    // Mevcut aktif seans bilgileri
     private val _currentSession = mutableStateOf<Session?>(null)
     val currentSession = _currentSession
     
-    // Mevcut egzersiz index'i
-    private val _currentExerciseIndex = mutableStateOf(0)
-    val currentExerciseIndex = _currentExerciseIndex
+    // Kayıtlı seans şablonları
+    private val _sessionTemplates = mutableStateListOf<SessionTemplate>()
+    val sessionTemplates: List<SessionTemplate> = _sessionTemplates
     
     // Tamamlanan seanslar listesi
     private val _completedSessions = mutableStateListOf<Session>()
@@ -37,19 +38,71 @@ class PhysiotherapyViewModel : ViewModel() {
         Exercise(name = "Omuz Dönme", description = "Omuzları döndürme hareketi"),
         Exercise(name = "Boyun Esneme", description = "Boyun kaslarını esneten hareketler"),
         Exercise(name = "Bel Esneme", description = "Bel kaslarını rahatlatma egzersizi"),
-        Exercise(name = "Ayak Bileği Dönme", description = "Ayak bileği esneklik egzersizi")
+        Exercise(name = "Ayak Bileği Dönme", description = "Ayak bileği esneklik egzersizi"),
+        Exercise(name = "Sırt Germe", description = "Sırt kaslarını germe egzersizi"),
+        Exercise(name = "Kalça Hareketleri", description = "Kalça esnekliği için hareketler")
     )
     
+    init {
+        // Örnek seans şablonları oluştur
+        createSampleTemplates()
+    }
+    
     /**
-     * Seçilen egzersizlerle yeni seans başlatır
+     * Örnek seans şablonları oluşturur
      */
-    fun startSession(selectedExercises: List<Exercise>) {
+    private fun createSampleTemplates() {
+        val morningTemplate = SessionTemplate(
+            name = "Sabah Rutin",
+            exercises = listOf(
+                availableExercises[0], // Kol Kaldırma
+                availableExercises[1], // Diz Bükme
+                availableExercises[3]  // Boyun Esneme
+            )
+        )
+        
+        val eveningTemplate = SessionTemplate(
+            name = "Akşam Seansı",
+            exercises = listOf(
+                availableExercises[2], // Omuz Dönme
+                availableExercises[4], // Bel Esneme
+                availableExercises[5]  // Ayak Bileği Dönme
+            )
+        )
+        
+        _sessionTemplates.addAll(listOf(morningTemplate, eveningTemplate))
+    }
+    
+    /**
+     * Yeni seans şablonu oluşturur
+     */
+    fun createSessionTemplate(name: String, selectedExercises: List<Exercise>) {
+        val template = SessionTemplate(
+            name = name,
+            exercises = selectedExercises
+        )
+        _sessionTemplates.add(template)
+    }
+    
+    /**
+     * Seans şablonunu siler
+     */
+    fun deleteSessionTemplate(templateId: String) {
+        _sessionTemplates.removeAll { it.id == templateId }
+    }
+    
+    /**
+     * Şablondan yeni seans başlatır
+     */
+    fun startSessionFromTemplate(template: SessionTemplate) {
         val session = Session(
-            exercises = selectedExercises,
-            startDate = Date()
+            templateId = template.id,
+            templateName = template.name,
+            exercises = template.exercises.map { it.copy(isCompleted = false) },
+            startDate = Date(),
+            currentExerciseIndex = 0
         )
         _currentSession.value = session
-        _currentExerciseIndex.value = 0
     }
     
     /**
@@ -57,7 +110,7 @@ class PhysiotherapyViewModel : ViewModel() {
      */
     fun completeCurrentExercise() {
         val session = _currentSession.value ?: return
-        val currentIndex = _currentExerciseIndex.value
+        val currentIndex = session.currentExerciseIndex
         
         if (currentIndex < session.exercises.size) {
             // Mevcut egzersizi tamamlanmış olarak işaretle
@@ -65,11 +118,11 @@ class PhysiotherapyViewModel : ViewModel() {
                 if (index == currentIndex) exercise.copy(isCompleted = true) else exercise
             }
             
-            // Seansı güncelle
-            _currentSession.value = session.copy(exercises = updatedExercises)
-            
-            // Sonraki egzersize geç
-            _currentExerciseIndex.value = currentIndex + 1
+            // Seansı güncelle - sonraki egzersize geç
+            _currentSession.value = session.copy(
+                exercises = updatedExercises,
+                currentExerciseIndex = currentIndex + 1
+            )
         }
     }
     
@@ -98,7 +151,6 @@ class PhysiotherapyViewModel : ViewModel() {
         
         // Mevcut seans bilgilerini temizle
         _currentSession.value = null
-        _currentExerciseIndex.value = 0
     }
     
     /**
@@ -106,7 +158,6 @@ class PhysiotherapyViewModel : ViewModel() {
      */
     fun cancelSession() {
         _currentSession.value = null
-        _currentExerciseIndex.value = 0
     }
     
     /**
@@ -114,7 +165,7 @@ class PhysiotherapyViewModel : ViewModel() {
      */
     fun isCurrentExerciseCompleted(): Boolean {
         val session = _currentSession.value ?: return false
-        val currentIndex = _currentExerciseIndex.value
+        val currentIndex = session.currentExerciseIndex
         return currentIndex < session.exercises.size && 
                session.exercises[currentIndex].isCompleted
     }
@@ -124,6 +175,17 @@ class PhysiotherapyViewModel : ViewModel() {
      */
     fun areAllExercisesCompleted(): Boolean {
         val session = _currentSession.value ?: return false
-        return _currentExerciseIndex.value >= session.exercises.size
+        return session.currentExerciseIndex >= session.exercises.size
+    }
+    
+    /**
+     * Mevcut egzersizi getirir
+     */
+    fun getCurrentExercise(): Exercise? {
+        val session = _currentSession.value ?: return null
+        val currentIndex = session.currentExerciseIndex
+        return if (currentIndex < session.exercises.size) {
+            session.exercises[currentIndex]
+        } else null
     }
 } 

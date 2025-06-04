@@ -25,7 +25,6 @@ import com.example.physiotherapyapp.data.Session
 @Composable
 fun SessionScreen(
     session: Session?,
-    currentExerciseIndex: Int,
     isCurrentExerciseCompleted: Boolean,
     areAllExercisesCompleted: Boolean,
     onStartExercise: () -> Unit,
@@ -53,7 +52,7 @@ fun SessionScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Aktif Seans",
+                        text = session.templateName,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -78,13 +77,13 @@ fun SessionScreen(
             if (areAllExercisesCompleted) {
                 // Tüm egzersizler tamamlandı - tebrik ekranı
                 CompletionScreen(
+                    sessionName = session.templateName,
                     onCompleteSession = onCompleteSession
                 )
             } else {
                 // Aktif egzersiz gösterimi
                 ActiveExerciseScreen(
                     session = session,
-                    currentExerciseIndex = currentExerciseIndex,
                     isCurrentExerciseCompleted = isCurrentExerciseCompleted,
                     onStartExercise = onStartExercise,
                     onCompleteExercise = onCompleteExercise
@@ -100,16 +99,15 @@ fun SessionScreen(
 @Composable
 private fun ActiveExerciseScreen(
     session: Session,
-    currentExerciseIndex: Int,
     isCurrentExerciseCompleted: Boolean,
     onStartExercise: () -> Unit,
     onCompleteExercise: () -> Unit
 ) {
-    val currentExercise = session.exercises[currentExerciseIndex]
+    val currentExercise = session.exercises[session.currentExerciseIndex]
     
     // İlerleme göstergesi
     LinearProgressIndicator(
-        progress = { (currentExerciseIndex + 1).toFloat() / session.exercises.size },
+        progress = { (session.currentExerciseIndex + 1).toFloat() / session.exercises.size },
         modifier = Modifier
             .fillMaxWidth()
             .height(8.dp),
@@ -118,7 +116,7 @@ private fun ActiveExerciseScreen(
     Spacer(modifier = Modifier.height(16.dp))
     
     Text(
-        text = "Egzersiz ${currentExerciseIndex + 1} / ${session.exercises.size}",
+        text = "Egzersiz ${session.currentExerciseIndex + 1} / ${session.exercises.size}",
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -265,6 +263,7 @@ private fun ActiveExerciseScreen(
  */
 @Composable
 private fun CompletionScreen(
+    sessionName: String,
     onCompleteSession: () -> Unit
 ) {
     Column(

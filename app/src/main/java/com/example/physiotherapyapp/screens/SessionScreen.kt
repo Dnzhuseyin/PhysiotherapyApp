@@ -1,6 +1,10 @@
 package com.example.physiotherapyapp.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -11,12 +15,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.physiotherapyapp.components.*
 import com.example.physiotherapyapp.data.Exercise
 import com.example.physiotherapyapp.data.Session
+import com.example.physiotherapyapp.ui.theme.*
 
 /**
  * Aktif seans ekranı - egzersizlerin sırayla yapıldığı ekran
@@ -105,12 +115,13 @@ private fun ActiveExerciseScreen(
 ) {
     val currentExercise = session.exercises[session.currentExerciseIndex]
     
-    // İlerleme göstergesi
-    LinearProgressIndicator(
-        progress = { (session.currentExerciseIndex + 1).toFloat() / session.exercises.size },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp),
+    // Gelişmiş ilerleme göstergesi
+    AnimatedProgressBar(
+        progress = (session.currentExerciseIndex + 1).toFloat() / session.exercises.size,
+        modifier = Modifier.fillMaxWidth(),
+        height = 12,
+        progressColor = MedicalGreen40,
+        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
     )
     
     Spacer(modifier = Modifier.height(16.dp))
@@ -123,18 +134,23 @@ private fun ActiveExerciseScreen(
     
     Spacer(modifier = Modifier.height(32.dp))
     
-    // Mevcut egzersiz kartı
-    Card(
+    // Mevcut egzersiz kartı - Gelişmiş tasarım
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 8.dp
-        )
+            .height(320.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                brush = if (isCurrentExerciseCompleted) {
+                    Brush.linearGradient(
+                        colors = listOf(MedicalGreen40, HealthyBlue40)
+                    )
+                } else {
+                    Brush.linearGradient(
+                        colors = listOf(GradientStart, GradientEnd)
+                    )
+                }
+            )
     ) {
         Column(
             modifier = Modifier
@@ -143,21 +159,40 @@ private fun ActiveExerciseScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Egzersiz durumu ikonu
-            Icon(
-                imageVector = if (isCurrentExerciseCompleted) {
-                    Icons.Default.CheckCircle
-                } else {
-                    Icons.Default.PlayArrow
-                },
-                contentDescription = "Egzersiz Durumu",
-                modifier = Modifier.size(64.dp),
-                tint = if (isCurrentExerciseCompleted) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                }
+            // Animasyonlu egzersiz durumu ikonu
+            val infiniteTransition = rememberInfiniteTransition(label = "exercise_icon")
+            val iconScale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = if (isCurrentExerciseCompleted) 1f else 1.2f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = EaseInOutSine),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "icon_scale"
             )
+            
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .background(
+                        color = Color.White.copy(alpha = 0.2f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isCurrentExerciseCompleted) {
+                        Icons.Default.CheckCircle
+                    } else {
+                        Icons.Default.PlayArrow
+                    },
+                    contentDescription = "Egzersiz Durumu",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .graphicsLayer(scaleX = iconScale, scaleY = iconScale),
+                    tint = Color.White
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -167,7 +202,7 @@ private fun ActiveExerciseScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = Color.White
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -178,7 +213,7 @@ private fun ActiveExerciseScreen(
                     text = currentExercise.description,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    color = Color.White.copy(alpha = 0.9f)
                 )
             }
             
@@ -187,142 +222,134 @@ private fun ActiveExerciseScreen(
             // Durum mesajı
             Text(
                 text = if (isCurrentExerciseCompleted) {
-                    "✓ Tamamlandı"
+                    "✓ Tamamlandı - Harika iş!"
                 } else {
                     "Egzersizi yapmaya hazır olduğunuzda başlatın"
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
-                color = if (isCurrentExerciseCompleted) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                },
-                fontWeight = if (isCurrentExerciseCompleted) FontWeight.Medium else FontWeight.Normal
+                color = Color.White.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium
             )
         }
     }
     
     Spacer(modifier = Modifier.height(32.dp))
     
-    // Aksiyon butonları
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (!isCurrentExerciseCompleted) {
-            Button(
-                onClick = onStartExercise,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Başlat",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        } else {
-            Button(
-                onClick = onCompleteExercise,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Sonrakine Geç",
-                    fontSize = 16.sp, 
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
+    // Aksiyon butonları - Gradient
+    if (!isCurrentExerciseCompleted) {
+        GradientButton(
+            text = "Egzersizi Başlat",
+            onClick = onStartExercise,
+            modifier = Modifier.fillMaxWidth(),
+            icon = Icons.Default.PlayArrow,
+            colors = listOf(HealthyBlue40, MedicalGreen40)
+        )
+    } else {
+        GradientButton(
+            text = "Sonrakine Geç",
+            onClick = onCompleteExercise,
+            modifier = Modifier.fillMaxWidth(),
+            icon = Icons.Default.CheckCircle,
+            colors = listOf(MedicalGreen40, SuccessGreen)
+        )
     }
 }
 
 /**
- * Seans tamamlanma ekranı
+ * Seans tamamlanma ekranı - Gelişmiş animasyonlu
  */
 @Composable
 private fun CompletionScreen(
     sessionName: String,
     onCompleteSession: () -> Unit
 ) {
+    var showSuccess by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(key1 = true) {
+        showSuccess = true
+    }
+    
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        // Tebrik ikonu
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = "Tebrikler",
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary
+        // Başarı animasyonu
+        SuccessAnimation(
+            isVisible = showSuccess,
+            modifier = Modifier.padding(16.dp)
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        // Tebrik mesajı
-        Text(
-            text = "Tebrikler!",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "Seansınızı başarıyla tamamladınız!",
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "10 puan kazandınız 🎉",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Medium
-        )
+        // Animasyonlu tebrik mesajı
+        AnimatedVisibility(
+            visible = showSuccess,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(800, delayMillis = 500)
+            ) + fadeIn(animationSpec = tween(800, delayMillis = 500))
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Tebrikler! 🎉",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = SuccessGreen,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "\"$sessionName\" seansını başarıyla tamamladınız!",
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Puan kazancı kartı
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(WarmAccent40, WarmAccent80)
+                            )
+                        )
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "+10 PUAN KAZANDINIZ!",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
         
         Spacer(modifier = Modifier.height(48.dp))
         
-        // Tamamla butonu
-        Button(
-            onClick = onCompleteSession,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+        // Animasyonlu tamamla butonu
+        AnimatedVisibility(
+            visible = showSuccess,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(800, delayMillis = 1000)
+            ) + fadeIn(animationSpec = tween(800, delayMillis = 1000))
         ) {
-            Text(
-                text = "Seansı Tamamla",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
+            GradientButton(
+                text = "Ana Sayfaya Dön",
+                onClick = onCompleteSession,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.CheckCircle,
+                colors = listOf(SuccessGreen, MedicalGreen40)
             )
         }
     }

@@ -1,5 +1,8 @@
 package com.example.physiotherapyapp.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -7,17 +10,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.physiotherapyapp.components.*
 import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
+import com.example.physiotherapyapp.ui.theme.*
 
 /**
  * Ana ekran - dashboard görünümü
@@ -73,76 +81,116 @@ fun HomeScreen(
 }
 
 /**
- * Hoşgeldin kartı
+ * Hoşgeldin kartı - Gelişmiş gradient arka plan
  */
 @Composable
 private fun WelcomeCard(user: User) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    var isVisible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(key1 = true) {
+        isVisible = true
+    }
+    
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(800, easing = EaseOutCubic)
+        ) + fadeIn(animationSpec = tween(800))
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(GradientStart, GradientEnd)
+                    )
+                )
         ) {
-            Icon(
-                imageVector = Icons.Default.FitnessCenter,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = getGreetingMessage(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Bugün hangi hedeflerinizi gerçekleştirmeye hazırsınız?",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-            )
+            Column(
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Animasyonlu ikon
+                val infiniteTransition = rememberInfiniteTransition(label = "icon_pulse")
+                val iconScale by infiniteTransition.animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2000, easing = EaseInOutSine),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "icon_scale"
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(
+                            color = Color.White.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(20.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FitnessCenter,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .graphicsLayer(scaleX = iconScale, scaleY = iconScale),
+                        tint = Color.White
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                Text(
+                    text = getGreetingMessage(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = Color.White
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = "Bugün hangi hedeflerinizi gerçekleştirmeye hazırsınız?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
         }
     }
 }
 
 /**
- * Hızlı istatistikler satırı
+ * Hızlı istatistikler satırı - Animasyonlu
  */
 @Composable
 private fun QuickStatsRow(user: User) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        StatCard(
+        StatisticCard(
             modifier = Modifier.weight(1f),
             title = "Toplam Seans",
             value = user.totalSessions.toString(),
             icon = Icons.Default.EmojiEvents,
             backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            iconColor = MedicalGreen40
         )
         
-        StatCard(
+        StatisticCard(
             modifier = Modifier.weight(1f),
             title = "Toplam Puan",
             value = user.totalPoints.toString(),
             icon = Icons.Default.Star,
             backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            iconColor = WarmAccent40
         )
     }
 }
@@ -201,55 +249,46 @@ private fun StatCard(
 }
 
 /**
- * Hızlı aksiyonlar kartı
+ * Hızlı aksiyonlar kartı - Gelişmiş tasarım
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QuickActionsCard(
     onCreateNewSession: () -> Unit
 ) {
-    Card(
+    EnhancedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        backgroundColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(28.dp)
         ) {
-            Text(
-                text = "Hızlı Başlat",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Button(
-                onClick = onCreateNewSession,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(16.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Icons.Default.Bolt,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(28.dp),
+                    tint = HealthyBlue40
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Yeni Seans Oluştur",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Hızlı Başlat",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            GradientButton(
+                text = "Yeni Seans Oluştur",
+                onClick = onCreateNewSession,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.Add,
+                colors = listOf(HealthyBlue40, MedicalGreen40)
+            )
         }
     }
 }
@@ -325,41 +364,19 @@ private fun RecentSessionCard(
 }
 
 /**
- * Motivasyon kartı
+ * Motivasyon kartı - Gelişmiş animasyonlu
  */
 @Composable
 private fun MotivationCard(totalSessions: Int) {
     val (message, icon) = getMotivationData(totalSessions)
     
-    Card(
+    MotivationCard(
+        message = message,
+        icon = icon,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
+        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+    )
 }
 
 /**

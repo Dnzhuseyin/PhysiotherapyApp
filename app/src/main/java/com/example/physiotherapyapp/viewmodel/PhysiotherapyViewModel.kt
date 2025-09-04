@@ -5,10 +5,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.physiotherapyapp.data.Exercise
-import com.example.physiotherapyapp.data.Session
-import com.example.physiotherapyapp.data.SessionTemplate
-import com.example.physiotherapyapp.data.User
+import com.example.physiotherapyapp.data.*
+import com.example.physiotherapyapp.services.BadgeService
 import com.example.physiotherapyapp.services.VoiceGuidanceService
 import com.example.physiotherapyapp.services.VoiceSettings
 import kotlinx.coroutines.delay
@@ -43,6 +41,19 @@ class PhysiotherapyViewModel(
     private var voiceGuidanceService: VoiceGuidanceService? = null
     private val _voiceSettings = mutableStateOf(VoiceSettings())
     val voiceSettings = _voiceSettings
+    
+    // Rozet servisi
+    private val badgeService = BadgeService()
+    private val _newBadges = mutableStateListOf<Badge>()
+    val newBadges: List<Badge> = _newBadges
+    
+    // Ağrı günlüğü
+    private val _painEntries = mutableStateListOf<PainEntry>()
+    val painEntries: List<PainEntry> = _painEntries
+    
+    // Hatırlatıcılar
+    private val _reminders = mutableStateListOf<ReminderNotification>()
+    val reminders: List<ReminderNotification> = _reminders
     
     // Önceden tanımlanmış egzersizler listesi
     val availableExercises = listOf(
@@ -169,28 +180,31 @@ class PhysiotherapyViewModel(
                 currentExerciseIndex = currentIndex + 1
             )
             
+            // Önce önceki sesi durdur
+            voiceGuidanceService?.stopSpeaking()
+            
             // Sesli duyuru: Egzersiz tamamlandı
             if (_voiceSettings.value.announceComplete) {
-                voiceGuidanceService?.announceExerciseComplete(currentExercise.name)
-                
-                // Motivasyon mesajı (her 2 egzersizde bir)
-                if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) {
-                    viewModelScope.launch {
-                        delay(1500)
+                viewModelScope.launch {
+                    // Kısa bir bekletme sonrası tebrik mesajı
+                    delay(500)
+                    voiceGuidanceService?.announceExerciseComplete(currentExercise.name)
+                    
+                    // Motivasyon mesajı (her 2 egzersizde bir)
+                    if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) {
+                        delay(2000)
                         voiceGuidanceService?.giveMotivation()
                     }
-                }
-                
-                // Sonraki egzersiz duyurusu
-                val nextIndex = currentIndex + 1
-                if (nextIndex < session.exercises.size) {
-                    val nextExercise = session.exercises[nextIndex]
-                    viewModelScope.launch {
-                        delay(2000)
+                    
+                    // Sonraki egzersiz duyurusu
+                    val nextIndex = currentIndex + 1
+                    if (nextIndex < session.exercises.size) {
+                        val nextExercise = session.exercises[nextIndex]
+                        delay(if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) 3000 else 2500)
                         voiceGuidanceService?.announceNextExercise(nextExercise.name)
                         
                         if (_voiceSettings.value.giveInstructions) {
-                            delay(2000)
+                            delay(2500)
                             voiceGuidanceService?.giveExerciseInstruction(nextExercise.name)
                         }
                     }
@@ -216,11 +230,16 @@ class PhysiotherapyViewModel(
         _completedSessions.add(completedSession)
         
         // Kullanıcı bilgilerini güncelle
-        _user.value = _user.value.copy(
+        val updatedUser = _user.value.copy(
             totalSessions = _user.value.totalSessions + 1,
             totalPoints = _user.value.totalPoints + 10,
-            completedSessions = _completedSessions.toList()
+            completedSessions = _completedSessions.toList(),
+            painEntries = _painEntries.toList()
         )
+        _user.value = updatedUser
+        
+        // Yeni rozetleri kontrol et
+        checkAndAwardBadges(updatedUser)
         
         // Sesli duyuru: Seans tamamlandı
         if (_voiceSettings.value.announceComplete) {
@@ -313,10 +332,241 @@ class PhysiotherapyViewModel(
     }
     
     /**
+     * Ağrı günlüğü girdisi ekler
+     */
+    fun addPainEntry(painEntry: PainEntry) {
+        _painEntries.add(painEntry)
+        
+        // Kullanıcıyı güncelle
+        _user.value = _user.value.copy(
+            painEntries = _painEntries.toList()
+        )
+        
+        // Yeni rozetleri kontrol et
+        checkAndAwardBadges(_user.value)
+    }
+    
+    /**
+     * Yeni rozetleri kontrol eder ve kazandırır
+     */
+    private fun checkAndAwardBadges(user: User) {
+        val newlyEarnedBadges = badgeService.checkForNewBadges(user)
+        if (newlyEarnedBadges.isNotEmpty()) {
+            _newBadges.addAll(newlyEarnedBadges)
+            
+            // Kullanıcının rozet listesini güncelle
+            _user.value = user.copy(
+                badges = user.badges + newlyEarnedBadges
+            )
+        }
+    }
+    
+    /**
+     * Yeni rozet bildirimini temizler
+     */
+    fun clearNewBadge(badgeId: String) {
+        _newBadges.removeAll { it.id == badgeId }
+    }
+    
+    /**
+     * Tüm yeni rozet bildirimlerini temizler
+     */
+    fun clearAllNewBadges() {
+        _newBadges.clear()
+    }
+    
+    /**
+     * Hatırlatıcı ekler
+     */
+    fun addReminder(reminder: ReminderNotification) {
+        _reminders.add(reminder)
+    }
+    
+    /**
+     * Hatırlatıcı günceller
+     */
+    fun updateReminder(reminder: ReminderNotification) {
+        val index = _reminders.indexOfFirst { it.id == reminder.id }
+        if (index != -1) {
+            _reminders[index] = reminder
+        }
+    }
+    
+    /**
+     * Hatırlatıcı siler
+     */
+    fun deleteReminder(reminderId: String) {
+        _reminders.removeAll { it.id == reminderId }
+    }
+    
+    /**
+     * Kişisel hedefleri günceller
+     */
+    fun updatePersonalGoals(goals: PersonalGoals) {
+        _user.value = _user.value.copy(goals = goals)
+    }
+    
+    /**
+     * Günlük hedef ilerlemesini hesaplar
+     */
+    fun getDailyProgress(): DailyProgress {
+        val today = Date()
+        val todaySessions = _completedSessions.filter { 
+            isSameDay(it.startDate, today)
+        }
+        
+        val todayPoints = todaySessions.sumOf { it.pointsEarned }
+        val goals = _user.value.goals
+        
+        return DailyProgress(
+            sessionsCompleted = todaySessions.size,
+            sessionTarget = goals.dailySessionTarget,
+            pointsEarned = todayPoints,
+            pointTarget = goals.dailyPointTarget
+        )
+    }
+    
+    /**
+     * Haftalık hedef ilerlemesini hesaplar
+     */
+    fun getWeeklyProgress(): WeeklyProgress {
+        val today = Date()
+        val weekStart = getWeekStart(today)
+        val weekSessions = _completedSessions.filter { 
+            it.startDate >= weekStart && it.startDate <= today
+        }
+        
+        val weekPoints = weekSessions.sumOf { it.pointsEarned }
+        val avgPainLevel = if (_painEntries.isNotEmpty()) {
+            _painEntries.filter { it.date >= weekStart }
+                .map { it.painLevel }
+                .average()
+        } else 0.0
+        
+        return WeeklyProgress(
+            weekStartDate = weekStart,
+            sessionsCompleted = weekSessions.size,
+            pointsEarned = weekPoints,
+            avgPainLevel = avgPainLevel
+        )
+    }
+    
+    /**
+     * İlerleme raporu oluşturur
+     */
+    fun generateProgressReport(startDate: Date, endDate: Date): ProgressReport {
+        val periodSessions = _completedSessions.filter { 
+            it.startDate >= startDate && it.startDate <= endDate
+        }
+        
+        val periodPainEntries = _painEntries.filter {
+            it.date >= startDate && it.date <= endDate
+        }
+        
+        val exerciseFrequency = periodSessions
+            .flatMap { it.exercises }
+            .groupingBy { it.name }
+            .eachCount()
+            .toList()
+            .sortedByDescending { it.second }
+            .take(5)
+            .map { it.first }
+        
+        return ProgressReport(
+            startDate = startDate,
+            endDate = endDate,
+            totalSessions = periodSessions.size,
+            totalPoints = periodSessions.sumOf { it.pointsEarned },
+            avgPainLevel = if (periodPainEntries.isNotEmpty()) {
+                periodPainEntries.map { it.painLevel }.average()
+            } else 0.0,
+            mostFrequentExercises = exerciseFrequency,
+            weeklyProgress = generateWeeklyProgressList(startDate, endDate)
+        )
+    }
+    
+    /**
+     * Haftalık ilerleme listesi oluşturur
+     */
+    private fun generateWeeklyProgressList(startDate: Date, endDate: Date): List<WeeklyProgress> {
+        val weeklyProgress = mutableListOf<WeeklyProgress>()
+        var currentWeekStart = getWeekStart(startDate)
+        
+        while (currentWeekStart <= endDate) {
+            val weekEnd = Date(currentWeekStart.time + 7 * 24 * 60 * 60 * 1000)
+            val weekSessions = _completedSessions.filter { 
+                it.startDate >= currentWeekStart && it.startDate < weekEnd
+            }
+            
+            val weekPainEntries = _painEntries.filter {
+                it.date >= currentWeekStart && it.date < weekEnd
+            }
+            
+            weeklyProgress.add(
+                WeeklyProgress(
+                    weekStartDate = currentWeekStart,
+                    sessionsCompleted = weekSessions.size,
+                    pointsEarned = weekSessions.sumOf { it.pointsEarned },
+                    avgPainLevel = if (weekPainEntries.isNotEmpty()) {
+                        weekPainEntries.map { it.painLevel }.average()
+                    } else 0.0
+                )
+            )
+            
+            currentWeekStart = weekEnd
+        }
+        
+        return weeklyProgress
+    }
+    
+    /**
+     * İki tarihin aynı gün olup olmadığını kontrol eder
+     */
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val cal1 = java.util.Calendar.getInstance().apply { time = date1 }
+        val cal2 = java.util.Calendar.getInstance().apply { time = date2 }
+        
+        return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+               cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+    
+    /**
+     * Haftanın başlangıç tarihini döndürür (Pazartesi)
+     */
+    private fun getWeekStart(date: Date): Date {
+        val cal = java.util.Calendar.getInstance().apply { 
+            time = date
+            firstDayOfWeek = java.util.Calendar.MONDAY
+        }
+        cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        
+        return cal.time
+    }
+    
+    /**
      * ViewModel temizleme
      */
     override fun onCleared() {
         super.onCleared()
         voiceGuidanceService?.shutdown()
     }
+}
+
+/**
+ * Günlük ilerleme data class'ı
+ */
+data class DailyProgress(
+    val sessionsCompleted: Int,
+    val sessionTarget: Int,
+    val pointsEarned: Int,
+    val pointTarget: Int
+) {
+    val sessionProgress: Float = 
+        if (sessionTarget > 0) sessionsCompleted.toFloat() / sessionTarget else 0f
+    val pointProgress: Float = 
+        if (pointTarget > 0) pointsEarned.toFloat() / pointTarget else 0f
 } 

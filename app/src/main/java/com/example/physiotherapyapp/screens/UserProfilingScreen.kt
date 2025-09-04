@@ -157,13 +157,9 @@ fun UserProfilingScreen(
                 }
                 
                 GradientButton(
-                    text = when (currentStep) {
-                        5 -> "✅ Profil Oluştur ve Bitir (Son Adım)"
-                        totalSteps - 1 -> "✅ Profil Oluştur ve Bitir"
-                        else -> "➡️ İleri (${currentStep + 1}/$totalSteps)"
-                    },
+                    text = if (currentStep == 5) "✅ PROFIL OLUŞTUR VE BİTİR" else "➡️ İleri (${currentStep + 1}/$totalSteps)",
                     onClick = {
-                        if (currentStep == totalSteps - 1) {
+                        if (currentStep == 5) {
                             // Profili oluştur ve tamamla
                             val profile = UserProfile(
                                 category = selectedCategory!!,
@@ -179,8 +175,8 @@ fun UserProfilingScreen(
                         }
                     },
                     modifier = Modifier.weight(if (currentStep > 0) 1f else 2f),
-                    icon = if (currentStep == totalSteps - 1) Icons.Default.Check else Icons.Default.ArrowForward,
-                    colors = listOf(HealthyBlue40, MedicalGreen40),
+                    icon = if (currentStep == 5) Icons.Default.Check else Icons.Default.ArrowForward,
+                    colors = if (currentStep == 5) listOf(SuccessGreen, MedicalGreen40) else listOf(HealthyBlue40, MedicalGreen40),
                     enabled = isStepValid
                 )
             }

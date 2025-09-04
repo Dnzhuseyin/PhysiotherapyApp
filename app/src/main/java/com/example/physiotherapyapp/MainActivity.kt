@@ -108,8 +108,7 @@ fun PhysiotherapyApp() {
                     onCreateNewSession = {
                         navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
                     },
-                    navController = navController,
-                    viewModel = viewModel
+                    navController = navController
                 )
             }
             

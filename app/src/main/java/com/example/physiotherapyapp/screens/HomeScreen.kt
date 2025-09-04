@@ -40,8 +40,7 @@ fun HomeScreen(
     user: User,
     recentTemplates: List<SessionTemplate> = emptyList(),
     onCreateNewSession: () -> Unit,
-    navController: NavController,
-    viewModel: com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel? = null
+    navController: NavController
 ) {
     Scaffold(
         topBar = {
@@ -77,8 +76,7 @@ fun HomeScreen(
                     // Hızlı aksiyonlar
                     QuickActionsCard(
                         onCreateNewSession = onCreateNewSession,
-                        navController = navController,
-                        viewModel = viewModel
+                        navController = navController
                     )
                     
                     // Son seanslar (eğer varsa)
@@ -280,8 +278,7 @@ private fun StatCard(
 @Composable
 private fun QuickActionsCard(
     onCreateNewSession: () -> Unit,
-    navController: NavController,
-    viewModel: com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel? = null
+    navController: NavController
 ) {
     EnhancedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -317,65 +314,6 @@ private fun QuickActionsCard(
                 icon = Icons.Default.AutoAwesome,
                 colors = listOf(HealthyBlue40, MedicalGreen40)
             )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Debug: Sesli test butonu
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
-                ),
-                border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.error)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "🔊 SES TEST MERKEZİ",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { 
-                                android.util.Log.d("SesTest", "Motivasyon test başlatıldı")
-                                viewModel?.giveMotivation()
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Motivasyon", fontSize = 12.sp)
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { 
-                                android.util.Log.d("SesTest", "Türkçe test başlatıldı")
-                                viewModel?.voiceGuidanceService?.speak("Merhaba! Bu bir Türkçe ses testi.", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Türkçe", fontSize = 12.sp)
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { 
-                                android.util.Log.d("SesTest", "İngilizce test başlatıldı")
-                                viewModel?.voiceGuidanceService?.speak("Hello! This is an English voice test.", android.speech.tts.TextToSpeech.QUEUE_FLUSH)
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("English", fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
             
             Spacer(modifier = Modifier.height(12.dp))
             

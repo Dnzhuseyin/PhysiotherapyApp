@@ -60,7 +60,7 @@ fun UserProfilingScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Adım ${currentStep + 1} / $totalSteps",
+                            text = "Adım ${currentStep + 1} / $totalSteps (Debug: step=$currentStep)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -156,8 +156,14 @@ fun UserProfilingScreen(
                     else -> false
                 }
                 
+                val buttonText = if (currentStep == 5) {
+                    "✅ PROFIL OLUŞTUR VE BİTİR"
+                } else {
+                    "➡️ İleri (${currentStep + 1}/$totalSteps)"
+                }
+                
                 GradientButton(
-                    text = if (currentStep == 5) "✅ PROFIL OLUŞTUR VE BİTİR" else "➡️ İleri (${currentStep + 1}/$totalSteps)",
+                    text = "$buttonText [Debug: step=$currentStep, isLast=${currentStep == 5}]",
                     onClick = {
                         if (currentStep == 5) {
                             // Profili oluştur ve tamamla

@@ -40,7 +40,10 @@ fun SessionScreen(
     onStartExercise: () -> Unit,
     onCompleteExercise: () -> Unit,
     onCompleteSession: () -> Unit,
-    onCancelSession: () -> Unit
+    onCancelSession: () -> Unit,
+    onRepeatInstruction: () -> Unit = {},
+    onGiveMotivation: () -> Unit = {},
+    onStopVoice: () -> Unit = {}
 ) {
     if (session == null) {
         // Hata durumu

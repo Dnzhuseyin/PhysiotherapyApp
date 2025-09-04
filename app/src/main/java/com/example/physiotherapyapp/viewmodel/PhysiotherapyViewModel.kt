@@ -1,19 +1,27 @@
 package com.example.physiotherapyapp.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.physiotherapyapp.data.Exercise
 import com.example.physiotherapyapp.data.Session
 import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
+import com.example.physiotherapyapp.services.VoiceGuidanceService
+import com.example.physiotherapyapp.services.VoiceSettings
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Date
 
 /**
  * Fizik tedavi uygulamasının ana ViewModel'i
  * Tüm veri yönetimi ve iş mantığı burada gerçekleşir
  */
-class PhysiotherapyViewModel : ViewModel() {
+class PhysiotherapyViewModel(
+    private val context: Context? = null
+) : ViewModel() {
     
     // Kullanıcı bilgileri
     private val _user = mutableStateOf(User())
@@ -31,6 +39,11 @@ class PhysiotherapyViewModel : ViewModel() {
     private val _completedSessions = mutableStateListOf<Session>()
     val completedSessions: List<Session> = _completedSessions
     
+    // Sesli yönlendirme servisi
+    private var voiceGuidanceService: VoiceGuidanceService? = null
+    private val _voiceSettings = mutableStateOf(VoiceSettings())
+    val voiceSettings = _voiceSettings
+    
     // Önceden tanımlanmış egzersizler listesi
     val availableExercises = listOf(
         Exercise(name = "Kol Kaldırma", description = "Kolları yanlara doğru kaldırma egzersizi"),
@@ -46,6 +59,9 @@ class PhysiotherapyViewModel : ViewModel() {
     init {
         // Örnek seans şablonları oluştur
         createSampleTemplates()
+        
+        // Sesli yönlendirme servisini başlat
+        initializeVoiceGuidance()
     }
     
     /**
@@ -71,6 +87,15 @@ class PhysiotherapyViewModel : ViewModel() {
         )
         
         _sessionTemplates.addAll(listOf(morningTemplate, eveningTemplate))
+    }
+    
+    /**
+     * Sesli yönlendirme servisini başlatır
+     */
+    private fun initializeVoiceGuidance() {
+        context?.let {
+            voiceGuidanceService = VoiceGuidanceService(it)
+        }
     }
     
     /**
@@ -103,6 +128,24 @@ class PhysiotherapyViewModel : ViewModel() {
             currentExerciseIndex = 0
         )
         _currentSession.value = session
+        
+        // Sesli duyuru: Seans başlangıcı
+        if (_voiceSettings.value.announceStart) {
+            voiceGuidanceService?.speak("${template.name} seansına hoş geldiniz. " +
+                    "${template.exercises.size} egzersiz ile sağlıklı bir seans geçireceksiniz.")
+            
+            viewModelScope.launch {
+                delay(3000) // 3 saniye bekle
+                val firstExercise = session.exercises.firstOrNull()
+                firstExercise?.let {
+                    voiceGuidanceService?.announceExerciseStart(it.name)
+                    if (_voiceSettings.value.giveInstructions) {
+                        delay(2000)
+                        voiceGuidanceService?.giveExerciseInstruction(it.name)
+                    }
+                }
+            }
+        }
     }
     
     /**
@@ -113,6 +156,8 @@ class PhysiotherapyViewModel : ViewModel() {
         val currentIndex = session.currentExerciseIndex
         
         if (currentIndex < session.exercises.size) {
+            val currentExercise = session.exercises[currentIndex]
+            
             // Mevcut egzersizi tamamlanmış olarak işaretle
             val updatedExercises = session.exercises.mapIndexed { index, exercise ->
                 if (index == currentIndex) exercise.copy(isCompleted = true) else exercise
@@ -123,6 +168,34 @@ class PhysiotherapyViewModel : ViewModel() {
                 exercises = updatedExercises,
                 currentExerciseIndex = currentIndex + 1
             )
+            
+            // Sesli duyuru: Egzersiz tamamlandı
+            if (_voiceSettings.value.announceComplete) {
+                voiceGuidanceService?.announceExerciseComplete(currentExercise.name)
+                
+                // Motivasyon mesajı (her 2 egzersizde bir)
+                if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) {
+                    viewModelScope.launch {
+                        delay(1500)
+                        voiceGuidanceService?.giveMotivation()
+                    }
+                }
+                
+                // Sonraki egzersiz duyurusu
+                val nextIndex = currentIndex + 1
+                if (nextIndex < session.exercises.size) {
+                    val nextExercise = session.exercises[nextIndex]
+                    viewModelScope.launch {
+                        delay(2000)
+                        voiceGuidanceService?.announceNextExercise(nextExercise.name)
+                        
+                        if (_voiceSettings.value.giveInstructions) {
+                            delay(2000)
+                            voiceGuidanceService?.giveExerciseInstruction(nextExercise.name)
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -148,6 +221,14 @@ class PhysiotherapyViewModel : ViewModel() {
             totalPoints = _user.value.totalPoints + 10,
             completedSessions = _completedSessions.toList()
         )
+        
+        // Sesli duyuru: Seans tamamlandı
+        if (_voiceSettings.value.announceComplete) {
+            voiceGuidanceService?.announceSessionComplete(
+                completedSession.templateName,
+                completedSession.exercises.size
+            )
+        }
         
         // Mevcut seans bilgilerini temizle
         _currentSession.value = null
@@ -187,5 +268,55 @@ class PhysiotherapyViewModel : ViewModel() {
         return if (currentIndex < session.exercises.size) {
             session.exercises[currentIndex]
         } else null
+    }
+    
+    /**
+     * Sesli yönlendirme ayarlarını günceller
+     */
+    fun updateVoiceSettings(settings: VoiceSettings) {
+        _voiceSettings.value = settings
+        voiceGuidanceService?.updateSettings(
+            enabled = settings.isEnabled,
+            rate = settings.speechRate,
+            pitch = settings.speechPitch
+        )
+    }
+    
+    /**
+     * Sesli konuşmayı durdurur
+     */
+    fun stopVoiceGuidance() {
+        voiceGuidanceService?.stopSpeaking()
+    }
+    
+    /**
+     * Egzersiz talimatını tekrar söyler
+     */
+    fun repeatInstruction() {
+        getCurrentExercise()?.let { exercise ->
+            voiceGuidanceService?.giveExerciseInstruction(exercise.name)
+        }
+    }
+    
+    /**
+     * Motivasyon mesajı söyler
+     */
+    fun giveMotivation() {
+        voiceGuidanceService?.giveMotivation()
+    }
+    
+    /**
+     * Geri sayım başlatır
+     */
+    fun startCountdown(seconds: Int = 3) {
+        voiceGuidanceService?.countdown(seconds)
+    }
+    
+    /**
+     * ViewModel temizleme
+     */
+    override fun onCleared() {
+        super.onCleared()
+        voiceGuidanceService?.shutdown()
     }
 } 

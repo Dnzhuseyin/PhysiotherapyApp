@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,8 +49,13 @@ fun PhysiotherapyApp() {
     // Navigation controller
     val navController = rememberNavController()
     
-    // Ana ViewModel
-    val viewModel: PhysiotherapyViewModel = viewModel()
+    // Context'i al
+    val context = LocalContext.current
+    
+    // Ana ViewModel - Context ile başlat
+    val viewModel: PhysiotherapyViewModel = viewModel {
+        PhysiotherapyViewModel(context = context)
+    }
     
     // ViewModel state'lerini observe et
     val user by viewModel.user
@@ -176,6 +182,16 @@ fun PhysiotherapyApp() {
                     onCancelSession = {
                         viewModel.cancelSession()
                         navController.popBackStack()
+                    },
+                    // Sesli yönlendirme kontrolleri
+                    onRepeatInstruction = {
+                        viewModel.repeatInstruction()
+                    },
+                    onGiveMotivation = {
+                        viewModel.giveMotivation()
+                    },
+                    onStopVoice = {
+                        viewModel.stopVoiceGuidance()
                     }
                 )
             }

@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,35 +55,44 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp)
-                .padding(top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Hoşgeldin kartı
-            WelcomeCard(user = user)
-            
-            // Hızlı istatistikler
-            QuickStatsRow(user = user)
-            
-            // Hızlı aksiyonlar
-            QuickActionsCard(
-                onCreateNewSession = onCreateNewSession,
-                navController = navController
-            )
-            
-            // Son seanslar (eğer varsa)
-            if (recentTemplates.isNotEmpty()) {
-                RecentSessionsSection(
-                    templates = recentTemplates.take(3)
-                )
+            item {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    // Hoşgeldin kartı
+                    WelcomeCard(user = user)
+                    
+                    // Hızlı istatistikler
+                    QuickStatsRow(user = user)
+                    
+                    // Hızlı aksiyonlar
+                    QuickActionsCard(
+                        onCreateNewSession = onCreateNewSession,
+                        navController = navController
+                    )
+                    
+                    // Son seanslar (eğer varsa)
+                    if (recentTemplates.isNotEmpty()) {
+                        RecentSessionsSection(
+                            templates = recentTemplates.take(3)
+                        )
+                    }
+                    
+                    // Motivasyon kartı
+                    MotivationCard(totalSessions = user.totalSessions)
+                    
+                    // Alt boşluk
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
-            
-            // Motivasyon kartı
-            MotivationCard(totalSessions = user.totalSessions)
         }
     }
 }

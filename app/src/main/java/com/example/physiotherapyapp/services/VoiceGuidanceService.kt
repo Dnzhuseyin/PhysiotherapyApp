@@ -70,9 +70,24 @@ class VoiceGuidanceService(private val context: Context) {
      * Sesli mesaj söyler
      */
     fun speak(text: String, priority: Int = TextToSpeech.QUEUE_ADD) {
-        if (!isEnabled || !_isInitialized.value) return
+        android.util.Log.d("VoiceGuidance", "speak() called with: $text")
+        android.util.Log.d("VoiceGuidance", "isEnabled: $isEnabled, isInitialized: ${_isInitialized.value}")
         
-        textToSpeech?.speak(text, priority, null, "utterance_$text")
+        if (!isEnabled) {
+            android.util.Log.d("VoiceGuidance", "Voice guidance disabled")
+            return
+        }
+        
+        if (!_isInitialized.value) {
+            android.util.Log.d("VoiceGuidance", "TTS not initialized")
+            return
+        }
+        
+        textToSpeech?.let { tts ->
+            android.util.Log.d("VoiceGuidance", "Speaking: $text")
+            val result = tts.speak(text, priority, null, "utterance_$text")
+            android.util.Log.d("VoiceGuidance", "TTS speak result: $result")
+        }
     }
     
     /**

@@ -40,7 +40,8 @@ fun HomeScreen(
     user: User,
     recentTemplates: List<SessionTemplate> = emptyList(),
     onCreateNewSession: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel? = null
 ) {
     Scaffold(
         topBar = {
@@ -76,7 +77,8 @@ fun HomeScreen(
                     // Hızlı aksiyonlar
                     QuickActionsCard(
                         onCreateNewSession = onCreateNewSession,
-                        navController = navController
+                        navController = navController,
+                        viewModel = viewModel
                     )
                     
                     // Son seanslar (eğer varsa)
@@ -278,7 +280,8 @@ private fun StatCard(
 @Composable
 private fun QuickActionsCard(
     onCreateNewSession: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel? = null
 ) {
     EnhancedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -314,6 +317,25 @@ private fun QuickActionsCard(
                 icon = Icons.Default.AutoAwesome,
                 colors = listOf(HealthyBlue40, MedicalGreen40)
             )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Debug: Sesli test butonu
+            OutlinedButton(
+                onClick = { 
+                    // Test için ViewModel'dan ses çalıştır
+                    viewModel?.giveMotivation()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("🔊 Ses Testi")
+            }
             
             Spacer(modifier = Modifier.height(12.dp))
             

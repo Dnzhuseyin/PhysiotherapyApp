@@ -157,7 +157,7 @@ fun UserProfilingScreen(
                 }
                 
                 GradientButton(
-                    text = if (currentStep == totalSteps - 1) "🎯 Profili Tamamla" else "İleri",
+                    text = if (currentStep == totalSteps - 1) "✅ Profil Oluştur ve Bitir" else "➡️ İleri",
                     onClick = {
                         if (currentStep == totalSteps - 1) {
                             // Profili oluştur ve tamamla

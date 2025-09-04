@@ -92,15 +92,9 @@ fun PhysiotherapyApp() {
             composable(NavigationRoutes.LOGIN) {
                 LoginScreen(
                     onContinueClick = {
-                        // İlk kez giriş yapan kullanıcıyı profilleme anketine yönlendir
-                        if (viewModel.userProfile.value == null) {
-                            navController.navigate(NavigationRoutes.USER_PROFILING) {
-                                popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
-                            }
-                        } else {
-                            navController.navigate(NavigationRoutes.MAIN_HOME) {
-                                popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
-                            }
+                        // Profil olsun ya da olmasın direkt ana sayfaya git
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
                         }
                     }
                 )
@@ -114,7 +108,8 @@ fun PhysiotherapyApp() {
                     onCreateNewSession = {
                         navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
                     },
-                    navController = navController
+                    navController = navController,
+                    viewModel = viewModel
                 )
             }
             
@@ -320,9 +315,7 @@ fun PhysiotherapyApp() {
                             }
                         },
                         onBackClick = {
-                            navController.navigate(NavigationRoutes.MAIN_HOME) {
-                                popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
-                            }
+                            navController.popBackStack()
                         },
                         onRegenerateRequest = {
                             viewModel.generateAIRecommendations()
@@ -331,9 +324,7 @@ fun PhysiotherapyApp() {
                 } else {
                     // Profil yoksa anket ekranına yönlendir
                     LaunchedEffect(Unit) {
-                        navController.navigate(NavigationRoutes.USER_PROFILING) {
-                            popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
-                        }
+                        navController.navigate(NavigationRoutes.USER_PROFILING)
                     }
                 }
             }

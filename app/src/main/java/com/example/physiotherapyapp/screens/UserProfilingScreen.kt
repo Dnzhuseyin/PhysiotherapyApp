@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,7 +62,7 @@ fun UserProfilingScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Adım ${currentStep + 1} / $totalSteps (Debug: step=$currentStep)",
+                            text = "Adım ${currentStep + 1} / $totalSteps",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -79,7 +81,7 @@ fun UserProfilingScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Progress Bar
+            // Progress Bar - Fixed at top
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
@@ -89,10 +91,12 @@ fun UserProfilingScreen(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Step Content
-            when (currentStep) {
+            // Scrollable content
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Step Content
+                when (currentStep) {
                 0 -> CategoryStep(
                     selectedCategory = selectedCategory,
                     onCategorySelected = { selectedCategory = it }
@@ -119,11 +123,10 @@ fun UserProfilingScreen(
                     selectedLimitations = selectedLimitations,
                     onLimitationsChanged = { selectedLimitations = it }
                 )
+                }
             }
             
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // Navigation Buttons
+            // Navigation Buttons - Fixed at bottom
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -156,14 +159,8 @@ fun UserProfilingScreen(
                     else -> false
                 }
                 
-                val buttonText = if (currentStep == 5) {
-                    "✅ PROFIL OLUŞTUR VE BİTİR"
-                } else {
-                    "➡️ İleri (${currentStep + 1}/$totalSteps)"
-                }
-                
                 GradientButton(
-                    text = "$buttonText [Debug: step=$currentStep, isLast=${currentStep == 5}]",
+                    text = if (currentStep == 5) "✅ PROFIL OLUŞTUR VE BİTİR" else "➡️ İleri",
                     onClick = {
                         if (currentStep == 5) {
                             // Profili oluştur ve tamamla
@@ -484,33 +481,35 @@ private fun StepContainer(
     subtitle: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.padding(16.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
         
-        item {
-            Column(content = content)
-        }
+        Column(content = content)
+        
+        // Alt boşluk - buton için yer
+        Spacer(modifier = Modifier.height(100.dp))
     }
 }
 

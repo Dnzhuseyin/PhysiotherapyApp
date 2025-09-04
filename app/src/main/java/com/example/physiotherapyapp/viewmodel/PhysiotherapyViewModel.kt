@@ -6,9 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.physiotherapyapp.data.*
-import com.example.physiotherapyapp.services.BadgeService
-import com.example.physiotherapyapp.services.VoiceGuidanceService
-import com.example.physiotherapyapp.services.VoiceSettings
+import com.example.physiotherapyapp.services.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -54,6 +52,17 @@ class PhysiotherapyViewModel(
     // Hatırlatıcılar
     private val _reminders = mutableStateListOf<ReminderNotification>()
     val reminders: List<ReminderNotification> = _reminders
+    
+    // AI servisi
+    private val aiService = AIRecommendationService()
+    
+    // Kullanıcı profili
+    private val _userProfile = mutableStateOf<UserProfile?>(null)
+    val userProfile = _userProfile
+    
+    // AI önerileri
+    private val _aiRecommendations = mutableStateListOf<AISessionRecommendation>()
+    val aiRecommendations: List<AISessionRecommendation> = _aiRecommendations
     
     // Önceden tanımlanmış egzersizler listesi
     val availableExercises = listOf(
@@ -556,6 +565,118 @@ class PhysiotherapyViewModel(
         cal.set(java.util.Calendar.MILLISECOND, 0)
         
         return cal.time
+    }
+    
+    /**
+     * Kullanıcı profilini ayarlar
+     */
+    fun setUserProfile(profile: UserProfile) {
+        _userProfile.value = profile
+        
+        // Profil ayarlandığında AI önerileri al
+        generateAIRecommendations()
+    }
+    
+    /**
+     * AI önerileri üretir
+     */
+    fun generateAIRecommendations() {
+        val profile = _userProfile.value ?: return
+        
+        viewModelScope.launch {
+            try {
+                val currentPain = _painEntries.lastOrNull()?.painLevel
+                val recentSessions = _completedSessions.takeLast(5).map { it.templateName }
+                
+                val recommendation = aiService.generateSessionRecommendation(
+                    userProfile = profile,
+                    currentPainLevel = currentPain,
+                    previousSessions = recentSessions
+                )
+                
+                _aiRecommendations.clear()
+                _aiRecommendations.add(recommendation)
+                
+            } catch (e: Exception) {
+                // Hata durumunda sessizce fallback yap
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    /**
+     * AI önerisini SessionTemplate olarak ekler
+     */
+    fun acceptAIRecommendation(recommendation: AISessionRecommendation) {
+        val exercises = recommendation.exercises.map { exerciseName ->
+            availableExercises.find { it.name == exerciseName } 
+                ?: Exercise(name = exerciseName, description = "AI önerisi")
+        }
+        
+        val template = SessionTemplate(
+            name = recommendation.sessionName,
+            exercises = exercises,
+            estimatedDuration = recommendation.estimatedDuration
+        )
+        
+        _sessionTemplates.add(template)
+    }
+    
+    /**
+     * Ağrı girdisini düzenler
+     */
+    fun updatePainEntry(updatedEntry: PainEntry) {
+        val index = _painEntries.indexOfFirst { it.id == updatedEntry.id }
+        if (index != -1) {
+            _painEntries[index] = updatedEntry
+            
+            // Kullanıcıyı güncelle
+            _user.value = _user.value.copy(
+                painEntries = _painEntries.toList()
+            )
+        }
+    }
+    
+    /**
+     * Ağrı girdisini siler
+     */
+    fun deletePainEntry(entryId: String) {
+        _painEntries.removeAll { it.id == entryId }
+        
+        // Kullanıcıyı güncelle
+        _user.value = _user.value.copy(
+            painEntries = _painEntries.toList()
+        )
+    }
+    
+    /**
+     * Kişiselleştirilmiş egzersiz açıklaması al
+     */
+    suspend fun getPersonalizedExerciseDescription(exerciseName: String): String {
+        val profile = _userProfile.value
+        val currentPain = _painEntries.lastOrNull()
+        
+        return if (profile != null) {
+            try {
+                aiService.getPersonalizedExerciseDescription(
+                    exerciseName = exerciseName,
+                    userProfile = profile,
+                    currentCondition = currentPain?.let { "Ağrı seviyesi: ${it.painLevel}/10" }
+                )
+            } catch (e: Exception) {
+                getDefaultExerciseDescription(exerciseName)
+            }
+        } else {
+            getDefaultExerciseDescription(exerciseName)
+        }
+    }
+    
+    /**
+     * Varsayılan egzersiz açıklaması
+     */
+    private fun getDefaultExerciseDescription(exerciseName: String): String {
+        return availableExercises.find { it.name == exerciseName }?.description 
+            ?: "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
     }
     
     /**

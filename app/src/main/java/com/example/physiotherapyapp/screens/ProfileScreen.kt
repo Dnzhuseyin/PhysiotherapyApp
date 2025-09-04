@@ -1,7 +1,16 @@
 package com.example.physiotherapyapp.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -11,11 +20,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.physiotherapyapp.components.EnhancedCard
+import com.example.physiotherapyapp.data.Badge
 import com.example.physiotherapyapp.data.User
+import com.example.physiotherapyapp.services.BadgeService
 
 /**
  * Profil ekranı - kullanıcının istatistiklerini gösterir
@@ -50,23 +64,29 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Profil başlığı
             ProfileHeader()
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // İstatistik kartları
             StatisticsCards(user = user)
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Rozetler bölümü
+            BadgesSection(badges = user.badges)
+            
+            Spacer(modifier = Modifier.height(24.dp))
             
             // İlerleme bilgisi
             ProgressSection(user = user)
             
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Motivasyon mesajı
             MotivationMessage(totalSessions = user.totalSessions)
@@ -323,5 +343,139 @@ private fun MotivationMessage(totalSessions: Int) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(16.dp)
         )
+    }
+}
+
+/**
+ * Rozetler bölümü
+ */
+@Composable
+private fun BadgesSection(badges: List<Badge>) {
+    val badgeService = BadgeService()
+    
+    EnhancedCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🏆 Kazanılan Rozetler",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${badges.size}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (badges.isEmpty()) {
+                // Boş durum
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "🎯",
+                        fontSize = 48.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Henüz rozet kazanmadınız",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "İlk seansınızı tamamlayarak başlayın!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                // Rozet grid'i
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.height((((badges.size + 2) / 3) * 100).dp)
+                ) {
+                    items(badges) { badge ->
+                        BadgeCard(
+                            badge = badge,
+                            badgeService = badgeService
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Tek bir rozet kartı
+ */
+@Composable
+private fun BadgeCard(
+    badge: Badge,
+    badgeService: BadgeService
+) {
+    val badgeColor = badgeService.getBadgeColor(badge.category)
+    val badgeIcon = badgeService.getBadgeIcon(badge.iconName)
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = badgeColor.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Rozet ikonu
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(badgeColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = badgeIcon,
+                    fontSize = 16.sp
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Rozet adı
+            Text(
+                text = badge.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
     }
 } 

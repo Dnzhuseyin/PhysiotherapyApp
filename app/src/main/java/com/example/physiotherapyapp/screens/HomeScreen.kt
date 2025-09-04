@@ -22,9 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.physiotherapyapp.components.*
 import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
+import com.example.physiotherapyapp.navigation.NavigationRoutes
 import com.example.physiotherapyapp.ui.theme.*
 
 /**
@@ -35,7 +37,8 @@ import com.example.physiotherapyapp.ui.theme.*
 fun HomeScreen(
     user: User,
     recentTemplates: List<SessionTemplate> = emptyList(),
-    onCreateNewSession: () -> Unit
+    onCreateNewSession: () -> Unit,
+    navController: NavController
 ) {
     Scaffold(
         topBar = {
@@ -65,7 +68,10 @@ fun HomeScreen(
             QuickStatsRow(user = user)
             
             // Hızlı aksiyonlar
-            QuickActionsCard(onCreateNewSession = onCreateNewSession)
+            QuickActionsCard(
+                onCreateNewSession = onCreateNewSession,
+                navController = navController
+            )
             
             // Son seanslar (eğer varsa)
             if (recentTemplates.isNotEmpty()) {
@@ -253,7 +259,8 @@ private fun StatCard(
  */
 @Composable
 private fun QuickActionsCard(
-    onCreateNewSession: () -> Unit
+    onCreateNewSession: () -> Unit,
+    navController: NavController
 ) {
     EnhancedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -289,6 +296,29 @@ private fun QuickActionsCard(
                 icon = Icons.Default.Add,
                 colors = listOf(HealthyBlue40, MedicalGreen40)
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                GradientButton(
+                    text = "Analiz",
+                    onClick = { navController.navigate(NavigationRoutes.ANALYTICS) },
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Analytics,
+                    colors = listOf(MedicalGreen40, HealthyBlue40)
+                )
+                
+                GradientButton(
+                    text = "Ağrı Raporları",
+                    onClick = { navController.navigate(NavigationRoutes.PAIN_REPORTS) },
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.LocalHospital,
+                    colors = listOf(WarmAccent40, ErrorRed.copy(alpha = 0.8f))
+                )
+            }
         }
     }
 }

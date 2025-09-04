@@ -17,4 +17,10 @@ object NavigationRoutes {
     const val MAIN_WORKOUT = "main_workout"
     const val MAIN_HISTORY = "main_history"
     const val MAIN_PROFILE = "main_profile"
+    
+    // Additional Routes
+    const val PAIN_DIARY = "pain_diary"
+    const val ANALYTICS = "analytics"
+    const val PAIN_REPORTS = "pain_reports"
+    const val VOICE_SETTINGS = "voice_settings"
 } 

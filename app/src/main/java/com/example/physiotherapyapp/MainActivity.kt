@@ -107,7 +107,8 @@ fun PhysiotherapyApp() {
                     recentTemplates = sessionTemplates,
                     onCreateNewSession = {
                         navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
-                    }
+                    },
+                    navController = navController
                 )
             }
             
@@ -173,10 +174,16 @@ fun PhysiotherapyApp() {
                         viewModel.completeCurrentExercise()
                     },
                     onCompleteSession = {
+                        val session = viewModel.currentSession.value
                         viewModel.completeSession()
-                        navController.navigate(NavigationRoutes.MAIN_HOME) {
-                            // Seans ekranını stack'ten kaldır
-                            popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
+                        
+                        // Ağrı günlüğüne yönlendir
+                        if (session != null) {
+                            navController.navigate("${NavigationRoutes.PAIN_DIARY}/${session.id}/${session.templateName}")
+                        } else {
+                            navController.navigate(NavigationRoutes.MAIN_HOME) {
+                                popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
+                            }
                         }
                     },
                     onCancelSession = {
@@ -192,6 +199,68 @@ fun PhysiotherapyApp() {
                     },
                     onStopVoice = {
                         viewModel.stopVoiceGuidance()
+                    }
+                )
+            }
+            
+            // Ağrı Günlüğü Ekranı
+            composable("${NavigationRoutes.PAIN_DIARY}/{sessionId}/{sessionName}") { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                val sessionName = backStackEntry.arguments?.getString("sessionName") ?: ""
+                
+                PainDiaryScreen(
+                    sessionId = sessionId,
+                    sessionName = sessionName,
+                    onPainSubmitted = { painEntry ->
+                        viewModel.addPainEntry(painEntry)
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
+                        }
+                    },
+                    onSkip = {
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            // Analiz Ekranı
+            composable(NavigationRoutes.ANALYTICS) {
+                AnalyticsScreen(
+                    user = user,
+                    dailyProgress = viewModel.getDailyProgress(),
+                    completedSessions = viewModel.completedSessions,
+                    painEntries = viewModel.painEntries,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Ağrı Raporları Ekranı
+            composable(NavigationRoutes.PAIN_REPORTS) {
+                PainReportsScreen(
+                    painEntries = viewModel.painEntries,
+                    completedSessions = viewModel.completedSessions,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Sesli Yönlendirme Ayarları Ekranı
+            composable(NavigationRoutes.VOICE_SETTINGS) {
+                VoiceSettingsScreen(
+                    currentSettings = viewModel.voiceSettings.value,
+                    onSettingsChange = { settings ->
+                        viewModel.updateVoiceSettings(settings)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onTestVoice = {
+                        viewModel.giveMotivation()
                     }
                 )
             }

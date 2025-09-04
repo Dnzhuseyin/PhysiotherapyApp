@@ -196,18 +196,22 @@ class PhysiotherapyViewModel(
                         voiceGuidanceService?.giveMotivation()
                     }
                     
-                    // Sonraki egzersiz duyurusu
-                    val nextIndex = currentIndex + 1
-                    if (nextIndex < session.exercises.size) {
-                        val nextExercise = session.exercises[nextIndex]
-                        delay(if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) 3000 else 2500)
-                        voiceGuidanceService?.announceNextExercise(nextExercise.name)
-                        
-                        if (_voiceSettings.value.giveInstructions) {
-                            delay(2500)
-                            voiceGuidanceService?.giveExerciseInstruction(nextExercise.name)
-                        }
+                                    // Sonraki egzersiz duyurusu (sadece daha fazla egzersiz varsa)
+                val nextIndex = currentIndex + 1
+                if (nextIndex < session.exercises.size) {
+                    val nextExercise = session.exercises[nextIndex]
+                    delay(if (_voiceSettings.value.motivationalMessages && currentIndex % 2 == 1) 3000 else 2500)
+                    voiceGuidanceService?.announceNextExercise(nextExercise.name)
+                    
+                    if (_voiceSettings.value.giveInstructions) {
+                        delay(2500)
+                        voiceGuidanceService?.giveExerciseInstruction(nextExercise.name)
                     }
+                } else {
+                    // Son egzersiz tamamlandı, sesli komutu durdur
+                    delay(3000)
+                    voiceGuidanceService?.speak("Tüm egzersizleri tamamladınız! Seans bitirmek için butona basın.")
+                }
                 }
             }
         }
@@ -243,10 +247,15 @@ class PhysiotherapyViewModel(
         
         // Sesli duyuru: Seans tamamlandı
         if (_voiceSettings.value.announceComplete) {
-            voiceGuidanceService?.announceSessionComplete(
-                completedSession.templateName,
-                completedSession.exercises.size
-            )
+            viewModelScope.launch {
+                voiceGuidanceService?.announceSessionComplete(
+                    completedSession.templateName,
+                    completedSession.exercises.size
+                )
+                // 5 saniye sonra sesi durdur
+                delay(5000)
+                voiceGuidanceService?.stopSpeaking()
+            }
         }
         
         // Mevcut seans bilgilerini temizle
@@ -257,6 +266,8 @@ class PhysiotherapyViewModel(
      * Mevcut seansı iptal eder
      */
     fun cancelSession() {
+        // Sesli komutları durdur
+        voiceGuidanceService?.stopSpeaking()
         _currentSession.value = null
     }
     

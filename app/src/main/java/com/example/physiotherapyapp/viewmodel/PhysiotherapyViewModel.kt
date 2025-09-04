@@ -36,7 +36,8 @@ class PhysiotherapyViewModel(
     val completedSessions: List<Session> = _completedSessions
     
     // Sesli yönlendirme servisi
-    private var voiceGuidanceService: VoiceGuidanceService? = null
+    var voiceGuidanceService: VoiceGuidanceService? = null
+        private set
     private val _voiceSettings = mutableStateOf(VoiceSettings())
     val voiceSettings = _voiceSettings
     

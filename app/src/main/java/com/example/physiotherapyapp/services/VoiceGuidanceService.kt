@@ -29,16 +29,29 @@ class VoiceGuidanceService(private val context: Context) {
     }
     
     private fun initializeTextToSpeech() {
+        android.util.Log.d("VoiceGuidance", "Initializing TTS...")
         textToSpeech = TextToSpeech(context) { status ->
+            android.util.Log.d("VoiceGuidance", "TTS init status: $status")
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.let { tts ->
+                    android.util.Log.d("VoiceGuidance", "TTS init successful")
+                    
                     // Türkçe dil desteği
                     val result = tts.setLanguage(Locale("tr", "TR"))
+                    android.util.Log.d("VoiceGuidance", "Turkish language result: $result")
                     
                     if (result == TextToSpeech.LANG_MISSING_DATA || 
                         result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        // Türkçe desteklenmiyorsa varsayılan dili kullan ama Türkçe mesajları koru
-                        tts.setLanguage(Locale.getDefault())
+                        android.util.Log.d("VoiceGuidance", "Turkish not supported, trying English")
+                        // Türkçe desteklenmiyorsa İngilizce deneyelim
+                        val englishResult = tts.setLanguage(Locale.ENGLISH)
+                        android.util.Log.d("VoiceGuidance", "English language result: $englishResult")
+                        
+                        if (englishResult == TextToSpeech.LANG_MISSING_DATA || 
+                            englishResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            android.util.Log.d("VoiceGuidance", "English also not supported, using default")
+                            tts.setLanguage(Locale.getDefault())
+                        }
                     }
                     
                     // Konuşma hızı ve tonu ayarla

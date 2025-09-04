@@ -168,7 +168,7 @@ private fun WelcomeCard(user: User) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = getMotivationalSubtitle(),
+                    text = "Bugün kendinizi ne kadar güçlü hissediyorsunuz? 💪✨",
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                     color = Color.White.copy(alpha = 0.95f),
@@ -298,11 +298,21 @@ private fun QuickActionsCard(
             Spacer(modifier = Modifier.height(20.dp))
             
             GradientButton(
-                text = "Yeni Seans Oluştur",
+                text = "🤖 AI Akıllı Program Önerisi",
+                onClick = { navController.navigate(NavigationRoutes.AI_RECOMMENDATION) },
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.AutoAwesome,
+                colors = listOf(HealthyBlue40, MedicalGreen40)
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            GradientButton(
+                text = "➕ Yeni Seans Oluştur",
                 onClick = onCreateNewSession,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Default.Add,
-                colors = listOf(HealthyBlue40, MedicalGreen40)
+                colors = listOf(MedicalGreen40, WarmAccent40)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -312,19 +322,19 @@ private fun QuickActionsCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 GradientButton(
-                    text = "Analiz",
+                    text = "📊 Analiz",
                     onClick = { navController.navigate(NavigationRoutes.ANALYTICS) },
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Analytics,
-                    colors = listOf(MedicalGreen40, HealthyBlue40)
+                    colors = listOf(WarmAccent40, HealthyBlue40)
                 )
                 
                 GradientButton(
-                    text = "Ağrı Raporları",
+                    text = "📋 Ağrı Rapor",
                     onClick = { navController.navigate(NavigationRoutes.PAIN_REPORTS) },
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.LocalHospital,
-                    colors = listOf(WarmAccent40, ErrorRed.copy(alpha = 0.8f))
+                    colors = listOf(MedicalGreen40, HealthyBlue40)
                 )
             }
         }

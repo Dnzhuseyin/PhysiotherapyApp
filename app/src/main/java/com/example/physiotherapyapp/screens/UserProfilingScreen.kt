@@ -155,7 +155,7 @@ fun UserProfilingScreen(
                 }
                 
                 GradientButton(
-                    text = if (currentStep == totalSteps - 1) "Tamamla" else "İleri",
+                    text = if (currentStep == totalSteps - 1) "🎯 Profili Tamamla" else "İleri",
                     onClick = {
                         if (currentStep == totalSteps - 1) {
                             // Profili oluştur ve tamamla
@@ -174,7 +174,8 @@ fun UserProfilingScreen(
                     },
                     modifier = Modifier.weight(if (currentStep > 0) 1f else 2f),
                     icon = if (currentStep == totalSteps - 1) Icons.Default.Check else Icons.Default.ArrowForward,
-                    colors = listOf(HealthyBlue40, MedicalGreen40)
+                    colors = listOf(HealthyBlue40, MedicalGreen40),
+                    enabled = isStepValid
                 )
             }
         }
@@ -518,7 +519,7 @@ private fun CategoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        backgroundColor = if (isSelected) option.color.copy(alpha = 0.1f) 
+        backgroundColor = if (isSelected) option.color.copy(alpha = 0.2f) 
                          else MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -574,7 +575,7 @@ private fun SelectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
+        backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
                          else MaterialTheme.colorScheme.surface
     ) {
         Row(

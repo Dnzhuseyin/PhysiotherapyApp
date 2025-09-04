@@ -37,8 +37,8 @@ class VoiceGuidanceService(private val context: Context) {
                     
                     if (result == TextToSpeech.LANG_MISSING_DATA || 
                         result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        // Türkçe desteklenmiyorsa İngilizce kullan
-                        tts.setLanguage(Locale.ENGLISH)
+                        // Türkçe desteklenmiyorsa varsayılan dili kullan ama Türkçe mesajları koru
+                        tts.setLanguage(Locale.getDefault())
                     }
                     
                     // Konuşma hızı ve tonu ayarla

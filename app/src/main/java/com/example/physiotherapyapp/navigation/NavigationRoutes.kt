@@ -23,4 +23,9 @@ object NavigationRoutes {
     const val ANALYTICS = "analytics"
     const val PAIN_REPORTS = "pain_reports"
     const val VOICE_SETTINGS = "voice_settings"
+    const val PAIN_HISTORY = "pain_history"
+    
+    // AI & Profiling Routes
+    const val USER_PROFILING = "user_profiling"
+    const val AI_RECOMMENDATION = "ai_recommendation"
 } 

@@ -92,9 +92,15 @@ fun PhysiotherapyApp() {
             composable(NavigationRoutes.LOGIN) {
                 LoginScreen(
                     onContinueClick = {
-                        navController.navigate(NavigationRoutes.MAIN_HOME) {
-                            // Login ekranını stack'ten kaldır
-                            popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
+                        // İlk kez giriş yapan kullanıcıyı profilleme anketine yönlendir
+                        if (viewModel.userProfile.value == null) {
+                            navController.navigate(NavigationRoutes.USER_PROFILING) {
+                                popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(NavigationRoutes.MAIN_HOME) {
+                                popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
+                            }
                         }
                     }
                 )
@@ -263,6 +269,73 @@ fun PhysiotherapyApp() {
                         viewModel.giveMotivation()
                     }
                 )
+            }
+            
+            // Ağrı Geçmişi Ekranı
+            composable(NavigationRoutes.PAIN_HISTORY) {
+                PainHistoryScreen(
+                    painEntries = viewModel.painEntries,
+                    completedSessions = viewModel.completedSessions,
+                    onEditPainEntry = { updatedEntry ->
+                        viewModel.updatePainEntry(updatedEntry)
+                    },
+                    onDeletePainEntry = { entryId ->
+                        viewModel.deletePainEntry(entryId)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Kullanıcı Profilleme Anketi
+            composable(NavigationRoutes.USER_PROFILING) {
+                UserProfilingScreen(
+                    onProfilingComplete = { userProfile ->
+                        viewModel.setUserProfile(userProfile)
+                        navController.navigate(NavigationRoutes.AI_RECOMMENDATION) {
+                            popUpTo(NavigationRoutes.USER_PROFILING) { inclusive = true }
+                        }
+                    },
+                    onSkip = {
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.USER_PROFILING) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            
+            // AI Akıllı Öneri Ekranı
+            composable(NavigationRoutes.AI_RECOMMENDATION) {
+                val userProfile = viewModel.userProfile.value
+                if (userProfile != null) {
+                    AIRecommendationScreen(
+                        userProfile = userProfile,
+                        currentPainLevel = viewModel.painEntries.lastOrNull()?.painLevel,
+                        previousSessions = viewModel.completedSessions.takeLast(5).map { it.templateName },
+                        onRecommendationAccepted = { sessionTemplate ->
+                            viewModel.addSessionTemplate(sessionTemplate)
+                            navController.navigate(NavigationRoutes.MAIN_HOME) {
+                                popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
+                            }
+                        },
+                        onBackClick = {
+                            navController.navigate(NavigationRoutes.MAIN_HOME) {
+                                popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
+                            }
+                        },
+                        onRegenerateRequest = {
+                            viewModel.generateAIRecommendations()
+                        }
+                    )
+                } else {
+                    // Profil yoksa anket ekranına yönlendir
+                    LaunchedEffect(Unit) {
+                        navController.navigate(NavigationRoutes.USER_PROFILING) {
+                            popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
+                        }
+                    }
+                }
             }
         }
     }

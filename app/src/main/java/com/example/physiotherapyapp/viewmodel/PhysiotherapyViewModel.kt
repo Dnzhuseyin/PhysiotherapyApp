@@ -623,6 +623,13 @@ class PhysiotherapyViewModel(
     }
     
     /**
+     * SessionTemplate ekler
+     */
+    fun addSessionTemplate(template: SessionTemplate) {
+        _sessionTemplates.add(template)
+    }
+    
+    /**
      * Ağrı girdisini düzenler
      */
     fun updatePainEntry(updatedEntry: PainEntry) {

@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -107,15 +108,19 @@ private fun WelcomeCard(user: User) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(28.dp))
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(GradientStart, GradientEnd)
+                        colors = listOf(GradientStart, GradientEnd),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 1000f)
                     )
                 )
         ) {
             Column(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 40.dp, horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Animasyonlu ikon
@@ -153,19 +158,22 @@ private fun WelcomeCard(user: User) {
                 
                 Text(
                     text = getGreetingMessage(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center,
-                    color = Color.White
+                    color = Color.White,
+                    lineHeight = 40.sp
                 )
                 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Bugün hangi hedeflerinizi gerçekleştirmeye hazırsınız?",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = getMotivationalSubtitle(),
+                    style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Color.White.copy(alpha = 0.95f),
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 24.sp
                 )
             }
         }
@@ -414,11 +422,58 @@ private fun MotivationCard(totalSessions: Int) {
  */
 private fun getGreetingMessage(): String {
     val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-    return when {
+    val dayOfWeek = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
+    
+    val timeGreeting = when {
+        hour < 6 -> "Erken kalkmışsınız! 🌄"
         hour < 12 -> "Günaydın! 🌅"
-        hour < 17 -> "İyi öğleden sonralar! ☀️"
-        else -> "İyi akşamlar! 🌙"
+        hour < 14 -> "İyi öğlenler! ☀️"
+        hour < 18 -> "İyi öğleden sonralar! 🌞"
+        hour < 21 -> "İyi akşamlar! 🌆"
+        else -> "İyi geceler! 🌙"
     }
+    
+    // Hafta sonu özel mesajları
+    val extraMessage = when (dayOfWeek) {
+        java.util.Calendar.SATURDAY -> " Hafta sonu keyfi! 🎉"
+        java.util.Calendar.SUNDAY -> " Huzurlu pazar! 🕊️"
+        java.util.Calendar.MONDAY -> " Haftaya güçlü başlayalım! 💪"
+        java.util.Calendar.FRIDAY -> " Cuma motivasyonu! 🚀"
+        else -> ""
+    }
+    
+    return timeGreeting + extraMessage
+}
+
+/**
+ * Motivasyonel alt başlık getirir
+ */
+private fun getMotivationalSubtitle(): String {
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    val motivationalMessages = when {
+        hour < 8 -> listOf(
+            "Erken kalkan yıldız olur! Bugün harika olacak! ⭐",
+            "Sabahın erken saatleri, başarının anahtarı! 🗝️",
+            "Güne spor ile başlamak muhteşem bir tercih! 🌟"
+        )
+        hour < 12 -> listOf(
+            "Sabah enerjisiyle hedeflerinize odaklanın! 💪",
+            "Bugün hangi hedeflerinizi gerçekleştirmeye hazırsınız? 🎯",
+            "Sağlığınız için attığınız her adım değerli! 👟"
+        )
+        hour < 17 -> listOf(
+            "Öğle molası perfect! Vücudunuzu harekete geçirin! 🔥",
+            "Gün ortasında egzersiz, enerji deposu! ⚡",
+            "Bu saatte spor yapmak süper motivasyon! 🚀"
+        )
+        else -> listOf(
+            "Akşam seansı ile güne mükemmel son! 🌅",
+            "Günün stresini atalım, enerjimizi yükseltelim! ✨",
+            "Akşam egzersizi, yarına hazırlık! 🌙"
+        )
+    }
+    
+    return motivationalMessages.random()
 }
 
 /**

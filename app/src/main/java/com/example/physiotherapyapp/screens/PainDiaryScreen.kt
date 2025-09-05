@@ -38,7 +38,7 @@ import com.example.physiotherapyapp.ui.theme.*
 fun PainDiaryScreen(
     sessionId: String,
     sessionName: String,
-    onPainSubmitted: (PainEntry) -> Unit,
+    onPainSubmitted: (Int, String, String) -> Unit, // painLevel, bodyPart, notes
     onSkip: () -> Unit
 ) {
     var selectedPainLevel by remember { mutableIntStateOf(-1) }
@@ -118,13 +118,7 @@ fun PainDiaryScreen(
                 text = "Ağrı Kaydını Tamamla",
                 onClick = {
                     if (selectedPainLevel >= 0) {
-                        val painEntry = PainEntry(
-                            sessionId = sessionId,
-                            painLevel = selectedPainLevel,
-                            bodyPart = selectedBodyPart,
-                            notes = notes
-                        )
-                        onPainSubmitted(painEntry)
+                        onPainSubmitted(selectedPainLevel, selectedBodyPart, notes)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

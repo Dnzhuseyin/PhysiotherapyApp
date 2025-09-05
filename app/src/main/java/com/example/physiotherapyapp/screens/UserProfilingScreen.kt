@@ -27,7 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.physiotherapyapp.components.EnhancedCard
 import com.example.physiotherapyapp.components.GradientButton
-import com.example.physiotherapyapp.services.*
+import com.example.physiotherapyapp.data.UserProfile
+import com.example.physiotherapyapp.data.UserCategory
+import com.example.physiotherapyapp.data.AgeGroup
+import com.example.physiotherapyapp.data.ActivityLevel
 import com.example.physiotherapyapp.ui.theme.*
 
 /**

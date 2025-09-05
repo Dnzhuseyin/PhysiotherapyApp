@@ -24,7 +24,9 @@ import com.example.physiotherapyapp.components.EnhancedCard
 import com.example.physiotherapyapp.components.GradientButton
 import com.example.physiotherapyapp.data.Exercise
 import com.example.physiotherapyapp.data.SessionTemplate
-import com.example.physiotherapyapp.services.*
+import com.example.physiotherapyapp.data.UserProfile
+import com.example.physiotherapyapp.data.AISessionRecommendation
+import com.example.physiotherapyapp.services.AIRecommendationService
 import com.example.physiotherapyapp.ui.theme.*
 import kotlinx.coroutines.delay
 import java.util.*
@@ -38,7 +40,7 @@ fun AIRecommendationScreen(
     userProfile: UserProfile,
     currentPainLevel: Int? = null,
     previousSessions: List<String> = emptyList(),
-    onRecommendationAccepted: (SessionTemplate) -> Unit,
+    onRecommendationAccepted: (AISessionRecommendation) -> Unit,
     onBackClick: () -> Unit,
     onRegenerateRequest: () -> Unit = {}
 ) {
@@ -127,9 +129,7 @@ fun AIRecommendationScreen(
                 improvements = improvements,
                 userProfile = userProfile,
                 onAccept = { 
-                    // AI önerisini SessionTemplate'e çevir
-                    val template = recommendation!!.toSessionTemplate()
-                    onRecommendationAccepted(template)
+                    onRecommendationAccepted(recommendation!!)
                 },
                 onRegenerate = {
                     isLoading = true

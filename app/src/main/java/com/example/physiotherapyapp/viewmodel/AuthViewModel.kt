@@ -1,0 +1,197 @@
+package com.example.physiotherapyapp.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
+/**
+ * Firebase Authentication ViewModel
+ */
+class AuthViewModel : ViewModel() {
+    
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+    
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val authState: StateFlow<AuthState> = _authState
+    
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
+    
+    private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
+    val currentUser: StateFlow<FirebaseUser?> = _currentUser
+    
+    init {
+        // Kullanıcının giriş durumunu kontrol et
+        checkAuthState()
+    }
+    
+    /**
+     * Mevcut auth durumunu kontrol et
+     */
+    private fun checkAuthState() {
+        val user = auth.currentUser
+        _isLoggedIn.value = user != null
+        _currentUser.value = user?.let {
+            FirebaseUser(
+                uid = it.uid,
+                email = it.email ?: "",
+                displayName = it.displayName ?: ""
+            )
+        }
+    }
+    
+    /**
+     * Kullanıcı girişi
+     */
+    fun login(email: String, password: String) {
+        viewModelScope.launch {
+            try {
+                _authState.value = AuthState.Loading
+                
+                val result = auth.signInWithEmailAndPassword(email, password).await()
+                
+                if (result.user != null) {
+                    _isLoggedIn.value = true
+                    _currentUser.value = FirebaseUser(
+                        uid = result.user!!.uid,
+                        email = result.user!!.email ?: "",
+                        displayName = result.user!!.displayName ?: ""
+                    )
+                    _authState.value = AuthState.Success("Giriş başarılı!")
+                } else {
+                    _authState.value = AuthState.Error("Giriş yapılamadı")
+                }
+                
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(
+                    when {
+                        e.message?.contains("password") == true -> "Şifre yanlış"
+                        e.message?.contains("email") == true -> "E-posta adresi geçersiz"
+                        e.message?.contains("user-not-found") == true -> "Kullanıcı bulunamadı"
+                        e.message?.contains("too-many-requests") == true -> "Çok fazla deneme. Lütfen bekleyin"
+                        else -> "Giriş hatası: ${e.message}"
+                    }
+                )
+            }
+        }
+    }
+    
+    /**
+     * Kullanıcı kaydı
+     */
+    fun register(email: String, password: String, displayName: String) {
+        viewModelScope.launch {
+            try {
+                _authState.value = AuthState.Loading
+                
+                // Firebase Authentication ile kayıt
+                val result = auth.createUserWithEmailAndPassword(email, password).await()
+                
+                if (result.user != null) {
+                    val user = result.user!!
+                    
+                    // Kullanıcı profil bilgilerini güncelle
+                    val profileUpdates = UserProfileChangeRequest.Builder()
+                        .setDisplayName(displayName)
+                        .build()
+                    
+                    user.updateProfile(profileUpdates).await()
+                    
+                    // Firestore'da kullanıcı dokümanı oluştur
+                    createUserDocument(user.uid, email, displayName)
+                    
+                    _isLoggedIn.value = true
+                    _currentUser.value = FirebaseUser(
+                        uid = user.uid,
+                        email = email,
+                        displayName = displayName
+                    )
+                    _authState.value = AuthState.Success("Hesap başarıyla oluşturuldu!")
+                    
+                } else {
+                    _authState.value = AuthState.Error("Hesap oluşturulamadı")
+                }
+                
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(
+                    when {
+                        e.message?.contains("email-already-in-use") == true -> "Bu e-posta adresi zaten kullanımda"
+                        e.message?.contains("weak-password") == true -> "Şifre çok zayıf (en az 6 karakter)"
+                        e.message?.contains("invalid-email") == true -> "Geçersiz e-posta adresi"
+                        else -> "Kayıt hatası: ${e.message}"
+                    }
+                )
+            }
+        }
+    }
+    
+    /**
+     * Firestore'da kullanıcı dokümanı oluştur
+     */
+    private suspend fun createUserDocument(uid: String, email: String, displayName: String) {
+        try {
+            val userDoc = hashMapOf(
+                "uid" to uid,
+                "email" to email,
+                "displayName" to displayName,
+                "createdAt" to com.google.firebase.Timestamp.now(),
+                "totalSessions" to 0,
+                "totalPoints" to 0,
+                "currentLevel" to 1,
+                "badges" to emptyList<String>(),
+                "profileCompleted" to false
+            )
+            
+            firestore.collection("users")
+                .document(uid)
+                .set(userDoc)
+                .await()
+                
+        } catch (e: Exception) {
+            android.util.Log.e("AuthViewModel", "Firestore kullanıcı oluşturma hatası", e)
+        }
+    }
+    
+    /**
+     * Çıkış yap
+     */
+    fun logout() {
+        auth.signOut()
+        _isLoggedIn.value = false
+        _currentUser.value = null
+        _authState.value = AuthState.Idle
+    }
+    
+    /**
+     * Auth state'i sıfırla
+     */
+    fun resetAuthState() {
+        _authState.value = AuthState.Idle
+    }
+}
+
+/**
+ * Authentication durumları
+ */
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    data class Success(val message: String) : AuthState()
+    data class Error(val message: String) : AuthState()
+}
+
+/**
+ * Firebase kullanıcı veri modeli
+ */
+data class FirebaseUser(
+    val uid: String,
+    val email: String,
+    val displayName: String
+)

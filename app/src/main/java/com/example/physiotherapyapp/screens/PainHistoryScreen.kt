@@ -35,9 +35,9 @@ import java.util.*
 fun PainHistoryScreen(
     painEntries: List<PainEntry>,
     completedSessions: List<Session>,
-    onBackClick: () -> Unit,
-    onEditPainEntry: (PainEntry) -> Unit,
-    onDeletePainEntry: (String) -> Unit
+    onEditPainEntry: (PainEntry, Int, String) -> Unit, // painEntry, newPainLevel, newNotes
+    onDeletePainEntry: (PainEntry) -> Unit,
+    onBackClick: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf<PainEntry?>(null) }
     var selectedEntry by remember { mutableStateOf<PainEntry?>(null) }
@@ -102,7 +102,7 @@ fun PainHistoryScreen(
                     PainHistoryEntryCard(
                         painEntry = painEntry,
                         session = session,
-                        onEdit = { onEditPainEntry(painEntry) },
+                        onEdit = { onEditPainEntry(painEntry, painEntry.painLevel, painEntry.notes) },
                         onDelete = { showDeleteDialog = painEntry },
                         onViewDetails = { selectedEntry = painEntry }
                     )
@@ -122,7 +122,7 @@ fun PainHistoryScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDeletePainEntry(entry.id)
+                        onDeletePainEntry(entry)
                         showDeleteDialog = null
                     }
                 ) {

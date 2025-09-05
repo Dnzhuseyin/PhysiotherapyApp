@@ -20,6 +20,7 @@ import com.example.physiotherapyapp.navigation.NavigationRoutes
 import com.example.physiotherapyapp.screens.*
 import com.example.physiotherapyapp.ui.theme.PhysiotherapyAppTheme
 import com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel
+import com.example.physiotherapyapp.viewmodel.AuthViewModel
 
 /**
  * Ana Activity - Fizik Tedavi Uygulaması
@@ -52,10 +53,15 @@ fun PhysiotherapyApp() {
     // Context'i al
     val context = LocalContext.current
     
-    // Ana ViewModel - Context ile başlat
+    // ViewModels
     val viewModel: PhysiotherapyViewModel = viewModel {
         PhysiotherapyViewModel(context = context)
     }
+    
+    val authViewModel: AuthViewModel = viewModel()
+    
+    // Auth durumunu kontrol et
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
     
     // ViewModel state'lerini observe et
     val user by viewModel.user
@@ -85,10 +91,30 @@ fun PhysiotherapyApp() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavigationRoutes.LOGIN,
+            startDestination = if (isLoggedIn) NavigationRoutes.MAIN_HOME else NavigationRoutes.AUTH,
             modifier = Modifier.padding(paddingValues)
         ) {
-            // Giriş Ekranı
+            // Firebase Authentication Ekranı
+            composable(NavigationRoutes.AUTH) {
+                AuthScreen(
+                    onLoginSuccess = {
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.AUTH) { inclusive = true }
+                        }
+                    },
+                    onRegisterSuccess = {
+                        navController.navigate(NavigationRoutes.MAIN_HOME) {
+                            popUpTo(NavigationRoutes.AUTH) { inclusive = true }
+                        }
+                    },
+                    onAuthError = { error ->
+                        // Error handling yapılabilir
+                    },
+                    authViewModel = authViewModel
+                )
+            }
+            
+            // Eski Giriş Ekranı (Firebase olmadan)
             composable(NavigationRoutes.LOGIN) {
                 LoginScreen(
                     onContinueClick = {
@@ -192,13 +218,13 @@ fun PhysiotherapyApp() {
                     },
                     // Sesli yönlendirme kontrolleri
                     onRepeatInstruction = {
-                        viewModel.repeatInstruction()
+                        // Voice guidance kaldırıldı
                     },
                     onGiveMotivation = {
-                        viewModel.giveMotivation()
+                        // Voice guidance kaldırıldı
                     },
                     onStopVoice = {
-                        viewModel.stopVoiceGuidance()
+                        // Voice guidance kaldırıldı
                     }
                 )
             }
@@ -211,8 +237,8 @@ fun PhysiotherapyApp() {
                 PainDiaryScreen(
                     sessionId = sessionId,
                     sessionName = sessionName,
-                    onPainSubmitted = { painEntry ->
-                        viewModel.addPainEntry(painEntry)
+                    onPainSubmitted = { painLevel, bodyPart, notes ->
+                        viewModel.addPainEntry(sessionId, painLevel, bodyPart, notes)
                         navController.navigate(NavigationRoutes.MAIN_HOME) {
                             popUpTo(NavigationRoutes.MAIN_HOME) { inclusive = true }
                         }
@@ -251,18 +277,8 @@ fun PhysiotherapyApp() {
             
             // Sesli Yönlendirme Ayarları Ekranı
             composable(NavigationRoutes.VOICE_SETTINGS) {
-                VoiceSettingsScreen(
-                    currentSettings = viewModel.voiceSettings.value,
-                    onSettingsChange = { settings ->
-                        viewModel.updateVoiceSettings(settings)
-                    },
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onTestVoice = {
-                        viewModel.giveMotivation()
-                    }
-                )
+                // Voice guidance artık desteklenmiyor
+                navController.popBackStack()
             }
             
             // Ağrı Geçmişi Ekranı
@@ -270,11 +286,11 @@ fun PhysiotherapyApp() {
                 PainHistoryScreen(
                     painEntries = viewModel.painEntries,
                     completedSessions = viewModel.completedSessions,
-                    onEditPainEntry = { updatedEntry ->
-                        viewModel.updatePainEntry(updatedEntry)
+                    onEditPainEntry = { painEntry, newPainLevel, newNotes ->
+                        viewModel.editPainEntry(painEntry, newPainLevel, newNotes)
                     },
-                    onDeletePainEntry = { entryId ->
-                        viewModel.deletePainEntry(entryId)
+                    onDeletePainEntry = { painEntry ->
+                        viewModel.deletePainEntry(painEntry)
                     },
                     onBackClick = {
                         navController.popBackStack()
@@ -307,8 +323,8 @@ fun PhysiotherapyApp() {
                         userProfile = userProfile,
                         currentPainLevel = viewModel.painEntries.lastOrNull()?.painLevel,
                         previousSessions = viewModel.completedSessions.takeLast(5).map { it.templateName },
-                        onRecommendationAccepted = { sessionTemplate ->
-                            viewModel.addSessionTemplate(sessionTemplate)
+                        onRecommendationAccepted = { recommendation ->
+                            viewModel.acceptAIRecommendation(recommendation)
                             navController.navigate(NavigationRoutes.MAIN_HOME) {
                                 popUpTo(NavigationRoutes.AI_RECOMMENDATION) { inclusive = true }
                             }

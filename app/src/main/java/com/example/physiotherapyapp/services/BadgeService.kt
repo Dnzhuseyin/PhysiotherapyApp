@@ -12,6 +12,30 @@ import java.util.Date
 class BadgeService {
     
     /**
+     * Firebase entegrasyonu için rozet uygunluğu kontrol eder
+     */
+    fun checkBadgeEligibility(
+        totalSessions: Int,
+        totalPoints: Int,
+        consecutiveDays: Int,
+        currentBadges: List<Badge>
+    ): List<Badge> {
+        val newBadges = mutableListOf<Badge>()
+        val earnedBadgeIds = currentBadges.map { it.id }.toSet()
+        
+        // Seans sayısı rozetleri
+        newBadges.addAll(checkSessionBadges(totalSessions, earnedBadgeIds))
+        
+        // Süreklilik rozetleri
+        newBadges.addAll(checkConsistencyBadges(consecutiveDays, earnedBadgeIds))
+        
+        // Puan rozetleri
+        newBadges.addAll(checkPointBadges(totalPoints, earnedBadgeIds))
+        
+        return newBadges
+    }
+    
+    /**
      * Kullanıcının yeni kazandığı rozetleri kontrol eder
      */
     fun checkForNewBadges(user: User): List<Badge> {

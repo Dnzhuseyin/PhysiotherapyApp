@@ -130,4 +130,51 @@ data class WeeklyProgress(
     val sessionsCompleted: Int,
     val pointsEarned: Int,
     val avgPainLevel: Double
-) 
+)
+
+/**
+ * AI session önerisi
+ */
+data class AISessionRecommendation(
+    val sessionName: String,
+    val description: String,
+    val exercises: List<String>,
+    val estimatedDuration: String,
+    val confidence: Float = 0.9f,
+    val specialNotes: String = "",
+    val improvements: List<String> = emptyList()
+)
+
+/**
+ * Kullanıcı profili (AI için)
+ */
+data class UserProfile(
+    val category: UserCategory,
+    val ageGroup: AgeGroup,
+    val activityLevel: ActivityLevel,
+    val primaryComplaint: String,
+    val goal: String,
+    val limitations: List<String> = emptyList()
+)
+
+enum class UserCategory(val displayName: String) {
+    ATHLETE("Sporcu"),
+    POST_SURGERY("Ameliyat Sonrası"),
+    ELDERLY("Yaşlı Bireyler"),
+    GENERAL("Genel Kullanıcı")
+}
+
+enum class AgeGroup(val displayName: String, val range: String) {
+    YOUNG("Genç", "18-30"),
+    MIDDLE("Orta Yaş", "31-50"),
+    MATURE("Olgun", "51-65"),
+    SENIOR("Yaşlı", "65+")
+}
+
+enum class ActivityLevel(val displayName: String) {
+    SEDENTARY("Sedanter"),
+    LIGHT("Hafif Aktif"),
+    MODERATE("Orta Aktif"),
+    HIGH("Çok Aktif"),
+    ATHLETE("Atletik")
+} 

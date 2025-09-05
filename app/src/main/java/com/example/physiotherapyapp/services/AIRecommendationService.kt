@@ -2,6 +2,11 @@ package com.example.physiotherapyapp.services
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.example.physiotherapyapp.data.UserProfile
+import com.example.physiotherapyapp.data.AISessionRecommendation
+import com.example.physiotherapyapp.data.UserCategory
+import com.example.physiotherapyapp.data.AgeGroup
+import com.example.physiotherapyapp.data.ActivityLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -312,59 +317,3 @@ class AIRecommendationService {
         }
     }
 }
-
-/**
- * AI seans önerisi data class'ı
- */
-data class AISessionRecommendation(
-    val sessionName: String,
-    val description: String,
-    val exercises: List<String>,
-    val estimatedDuration: String,
-    val specialNotes: String,
-    val confidence: Float // 0.0 - 1.0 arası AI güven oranı
-)
-
-/**
- * Kullanıcı kategorileri
- */
-enum class UserCategory(val displayName: String) {
-    ATHLETE("Sporcu"),
-    POST_SURGERY("Ameliyat Sonrası"),
-    ELDERLY("Yaşlı Bireyler"),
-    GENERAL("Genel Kullanıcı")
-}
-
-/**
- * Yaş grupları
- */
-enum class AgeGroup(val displayName: String, val range: String) {
-    YOUNG("Genç", "18-30"),
-    MIDDLE("Orta Yaş", "31-50"),
-    MATURE("Olgun", "51-65"),
-    SENIOR("Yaşlı", "65+")
-}
-
-/**
- * Aktivite seviyeleri
- */
-enum class ActivityLevel(val displayName: String) {
-    SEDENTARY("Sedanter"),
-    LIGHT("Hafif Aktif"),
-    MODERATE("Orta Aktif"),
-    HIGH("Çok Aktif"),
-    ATHLETE("Atletik")
-}
-
-/**
- * Kullanıcı profili
- */
-data class UserProfile(
-    val category: UserCategory,
-    val ageGroup: AgeGroup,
-    val activityLevel: ActivityLevel,
-    val primaryComplaint: String, // Ana şikayet
-    val goal: String, // Hedef
-    val limitations: List<String> = emptyList(), // Kısıtlamalar
-    val medicalHistory: List<String> = emptyList() // Tıbbi geçmiş
-)

@@ -566,21 +566,7 @@ class PhysiotherapyViewModel(
      * Egzersiz için kişiselleştirilmiş açıklama döndürür
      */
     fun getPersonalizedExerciseDescription(exerciseName: String): String {
-        val profile = _userProfile.value
-        return if (profile != null) {
-            // Suspend function'ı coroutine içinde çağır
-            var description = ""
-            viewModelScope.launch {
-                try {
-                    description = aiService.getPersonalizedExerciseDescription(exerciseName, profile)
-                } catch (e: Exception) {
-                    description = "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
-                }
-            }
-            description
-        } else {
-            "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
-        }
+        return aiService.getPersonalizedExerciseDescription(exerciseName)
     }
     
     /**
@@ -628,12 +614,5 @@ data class DailyProgress(
     val date: Date,
     val sessionsCompleted: Int,
     val pointsEarned: Int,
-    val avgPainLevel: Double,
-    val sessionTarget: Int = 1,
-    val pointTarget: Int = 10
-) {
-    val sessionProgress: Float
-        get() = if (sessionTarget > 0) sessionsCompleted.toFloat() / sessionTarget else 0f
-    val pointProgress: Float
-        get() = if (pointTarget > 0) pointsEarned.toFloat() / pointTarget else 0f
-}
+    val avgPainLevel: Double
+)

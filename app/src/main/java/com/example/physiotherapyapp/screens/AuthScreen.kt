@@ -30,6 +30,8 @@ import com.example.physiotherapyapp.components.GradientButton
 import com.example.physiotherapyapp.ui.theme.*
 import com.example.physiotherapyapp.viewmodel.AuthViewModel
 import com.example.physiotherapyapp.viewmodel.AuthState
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * Giriş ve Kayıt ekranı - Firebase Authentication
@@ -267,6 +269,10 @@ fun AuthScreen(
                 textAlign = TextAlign.Center
             )
             
+            // Firebase Connection Test Card
+            Spacer(modifier = Modifier.height(16.dp))
+            FirebaseConnectionCard()
+            
             // Debug bilgileri
             if (authState is AuthState.Success || authState is AuthState.Error) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -307,6 +313,84 @@ fun AuthScreen(
             }
             
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+/**
+ * Firebase bağlantı durumunu test eden kart
+ */
+@Composable
+private fun FirebaseConnectionCard() {
+    val firebaseApp = remember { 
+        try {
+            FirebaseApp.getInstance()
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    val auth = remember { 
+        try {
+            FirebaseAuth.getInstance()
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Cloud,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "🔥 Firebase Bağlantı Testi",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Firebase App: ${if (firebaseApp != null) "✅ Yüklendi" else "❌ Bulunamadı"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Text(
+                text = "Firebase Auth: ${if (auth != null) "✅ Yüklendi" else "❌ Bulunamadı"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            if (firebaseApp != null) {
+                Text(
+                    text = "App Name: ${firebaseApp.name}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Text(
+                    text = "Project ID: ${firebaseApp.options.projectId ?: "null"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

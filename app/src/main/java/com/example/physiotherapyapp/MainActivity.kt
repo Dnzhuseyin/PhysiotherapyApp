@@ -21,6 +21,8 @@ import com.example.physiotherapyapp.screens.*
 import com.example.physiotherapyapp.ui.theme.PhysiotherapyAppTheme
 import com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel
 import com.example.physiotherapyapp.viewmodel.AuthViewModel
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * Ana Activity - Fizik Tedavi Uygulaması
@@ -31,6 +33,15 @@ import com.example.physiotherapyapp.viewmodel.AuthViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Firebase'i manuel olarak initialize et
+        try {
+            FirebaseApp.initializeApp(this)
+            android.util.Log.d("MainActivity", "Firebase initialized successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Firebase initialization failed", e)
+        }
+        
         enableEdgeToEdge()
         setContent {
             PhysiotherapyAppTheme {

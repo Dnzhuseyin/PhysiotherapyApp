@@ -93,8 +93,11 @@ class AuthViewModel : ViewModel() {
                 }
                 
             } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "Login error: ${e.message}", e)
                 _authState.value = AuthState.Error(
                     when {
+                        e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
+                            "Firebase yapılandırma hatası! google-services.json dosyası bulunamadı."
                         e.message?.contains("password") == true -> "Şifre yanlış"
                         e.message?.contains("email") == true -> "E-posta adresi geçersiz"
                         e.message?.contains("user-not-found") == true -> "Kullanıcı bulunamadı"
@@ -150,8 +153,11 @@ class AuthViewModel : ViewModel() {
                 }
                 
             } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "Register error: ${e.message}", e)
                 _authState.value = AuthState.Error(
                     when {
+                        e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
+                            "Firebase yapılandırma hatası! google-services.json dosyası bulunamadı."
                         e.message?.contains("email-already-in-use") == true -> "Bu e-posta adresi zaten kullanımda"
                         e.message?.contains("weak-password") == true -> "Şifre çok zayıf (en az 6 karakter)"
                         e.message?.contains("invalid-email") == true -> "Geçersiz e-posta adresi"

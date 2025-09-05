@@ -28,14 +28,6 @@ class AuthViewModel : ViewModel() {
     val currentUser: StateFlow<FirebaseUser?> = _currentUser
     
     init {
-        // Network error için emulator test
-        try {
-            auth.useEmulator("10.0.2.2", 9099)
-            android.util.Log.d("AuthViewModel", "Firebase Auth Emulator enabled for testing")
-        } catch (e: Exception) {
-            android.util.Log.d("AuthViewModel", "Firebase Auth Emulator not available, using production")
-        }
-        
         // Kullanıcının giriş durumunu kontrol et
         checkAuthState()
         

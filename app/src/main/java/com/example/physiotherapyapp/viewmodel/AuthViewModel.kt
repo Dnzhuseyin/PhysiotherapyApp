@@ -30,6 +30,13 @@ class AuthViewModel : ViewModel() {
     init {
         // Kullanıcının giriş durumunu kontrol et
         checkAuthState()
+        
+        // Firebase Auth state listener ekle
+        auth.addAuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            android.util.Log.d("AuthViewModel", "Firebase auth state changed: user=${user?.uid}")
+            checkAuthState()
+        }
     }
     
     /**
@@ -45,6 +52,15 @@ class AuthViewModel : ViewModel() {
                 displayName = it.displayName ?: ""
             )
         }
+        
+        android.util.Log.d("AuthViewModel", "checkAuthState: user=${user?.uid}, isLoggedIn=${_isLoggedIn.value}")
+    }
+    
+    /**
+     * Auth state'i manuel olarak yenile
+     */
+    fun refreshAuthState() {
+        checkAuthState()
     }
     
     /**
@@ -58,13 +74,20 @@ class AuthViewModel : ViewModel() {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
                 
                 if (result.user != null) {
+                    val user = result.user!!
                     _isLoggedIn.value = true
                     _currentUser.value = FirebaseUser(
-                        uid = result.user!!.uid,
-                        email = result.user!!.email ?: "",
-                        displayName = result.user!!.displayName ?: ""
+                        uid = user.uid,
+                        email = user.email ?: "",
+                        displayName = user.displayName ?: ""
                     )
+                    
+                    // Auth state'i tekrar kontrol et
+                    checkAuthState()
+                    
                     _authState.value = AuthState.Success("Giriş başarılı!")
+                    
+                    android.util.Log.d("AuthViewModel", "Login success: uid=${user.uid}, isLoggedIn=${_isLoggedIn.value}")
                 } else {
                     _authState.value = AuthState.Error("Giriş yapılamadı")
                 }
@@ -107,13 +130,20 @@ class AuthViewModel : ViewModel() {
                     // Firestore'da kullanıcı dokümanı oluştur
                     createUserDocument(user.uid, email, displayName)
                     
+                    // Auth state'i güncelle
                     _isLoggedIn.value = true
                     _currentUser.value = FirebaseUser(
                         uid = user.uid,
                         email = email,
                         displayName = displayName
                     )
+                    
+                    // Auth state'i tekrar kontrol et
+                    checkAuthState()
+                    
                     _authState.value = AuthState.Success("Hesap başarıyla oluşturuldu!")
+                    
+                    android.util.Log.d("AuthViewModel", "Register success: uid=${user.uid}, isLoggedIn=${_isLoggedIn.value}")
                     
                 } else {
                     _authState.value = AuthState.Error("Hesap oluşturulamadı")

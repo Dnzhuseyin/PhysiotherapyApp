@@ -63,6 +63,15 @@ fun PhysiotherapyApp() {
     // Auth durumunu kontrol et
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
     
+    // Auth state değişikliklerini dinle
+    LaunchedEffect(isLoggedIn) {
+        android.util.Log.d("MainActivity", "Auth state changed: isLoggedIn=$isLoggedIn")
+        if (isLoggedIn) {
+            // Kullanıcı giriş yaptı, verileri yükle
+            viewModel.loadDataFromFirebase()
+        }
+    }
+    
     // ViewModel state'lerini observe et
     val user by viewModel.user
     val currentSession by viewModel.currentSession

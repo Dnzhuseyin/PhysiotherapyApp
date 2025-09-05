@@ -58,8 +58,10 @@ fun AuthScreen(
             is AuthState.Success -> {
                 isLoading = false
                 if (isLogin) {
+                    authViewModel.resetAuthState()
                     onLoginSuccess()
                 } else {
+                    authViewModel.resetAuthState()
                     onRegisterSuccess()
                 }
             }

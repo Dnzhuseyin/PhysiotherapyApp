@@ -110,7 +110,7 @@ class PhysiotherapyViewModel(
     /**
      * Firebase'den tüm kullanıcı verilerini yükler
      */
-    private fun loadDataFromFirebase() {
+    fun loadDataFromFirebase() {
         viewModelScope.launch {
             try {
                 // Kullanıcı bilgilerini yükle

@@ -566,20 +566,17 @@ class PhysiotherapyViewModel(
      * Egzersiz için kişiselleştirilmiş açıklama döndürür
      */
     fun getPersonalizedExerciseDescription(exerciseName: String): String {
-        val profile = _userProfile.value
-        return if (profile != null) {
-            // Suspend function'ı coroutine içinde çağır
-            var description = ""
-            viewModelScope.launch {
-                try {
-                    description = aiService.getPersonalizedExerciseDescription(exerciseName, profile)
-                } catch (e: Exception) {
-                    description = "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
-                }
-            }
-            description
-        } else {
-            "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
+        // Basit açıklama döndür - AI çağrısı fazla karmaşık
+        return when (exerciseName) {
+            "Kol Kaldırma" -> "Kollarınızı omuz hizasında yavaşça yukarı kaldırın ve indirin."
+            "Diz Bükme" -> "Dizlerinizi göğsünüze doğru yavaşça çekin."
+            "Omuz Dönme" -> "Omuzlarınızı dairesel hareket ettirerek gergin kasları gevşetin."
+            "Boyun Esneme" -> "Boyununuzu sağa sola yavaşça eğin, ani hareketlerden kaçının."
+            "Bel Esneme" -> "Ellerinizi belinize koyarak yavaşça geriye doğru eğilin."
+            "Ayak Bileği Dönme" -> "Ayak bileğinizi saat yönünde ve ters yönde çevirin."
+            "Sırt Germe" -> "Kollarınızı öne uzatarak sırt kaslarınızı gerin."
+            "Kalça Hareketleri" -> "Kalçanızı yavaşça öne arkaya hareket ettirin."
+            else -> "Bu egzersizi doğru form ile yapın ve nefes almayı unutmayın."
         }
     }
     

@@ -118,10 +118,15 @@ class PhysiotherapyViewModel(
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Getting user data...")
                 
                 // Kullanıcı bilgilerini yükle
-                firebaseRepository.getUser()?.let { firestoreUser ->
-                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: User loaded: ${firestoreUser.uid}")
-                    _user.value = firestoreUser.toLocal()
-                } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No user data found")
+                val existingUser = firebaseRepository.getUser()
+                if (existingUser != null) {
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: User loaded: ${existingUser.uid}")
+                    _user.value = existingUser.toLocal()
+                } else {
+                    android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No user data found, creating initial user")
+                    // Yeni kullanıcı için initial data oluştur
+                    createInitialUserData()
+                }
                 
                 // Kullanıcı profilini yükle
                 firebaseRepository.getUserProfile()?.let { profile ->
@@ -135,6 +140,9 @@ class PhysiotherapyViewModel(
                 if (templates.isNotEmpty()) {
                     _sessionTemplates.clear()
                     _sessionTemplates.addAll(templates)
+                } else {
+                    // Yeni kullanıcı için sample template'ler oluştur
+                    createSampleTemplates()
                 }
                 
                 // Tamamlanan seansları yükle
@@ -146,6 +154,8 @@ class PhysiotherapyViewModel(
                 val painEntries = firebaseRepository.getUserPainEntries()
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Pain entries loaded: ${painEntries.size}")
                 _user.value = _user.value.copy(painEntries = painEntries)
+                _painEntries.clear()
+                _painEntries.addAll(painEntries)
                 
                 // Rozetleri yükle
                 val badges = firebaseRepository.getUserBadges()
@@ -163,6 +173,35 @@ class PhysiotherapyViewModel(
             } catch (e: Exception) {
                 android.util.Log.e("PhysiotherapyViewModel", "Firebase veri yükleme hatası", e)
             }
+        }
+    }
+    
+    /**
+     * Yeni kullanıcı için initial data oluşturur ve Firebase'e kaydeder
+     */
+    private suspend fun createInitialUserData() {
+        try {
+            // Varsayılan kullanıcı bilgileri oluştur
+            val defaultUser = User(
+                name = "Kullanıcı",
+                totalSessions = 0,
+                totalPoints = 0,
+                completedSessions = emptyList(),
+                painEntries = emptyList(),
+                badges = emptyList(),
+                goals = PersonalGoals()
+            )
+            
+            // Local state'i güncelle
+            _user.value = defaultUser
+            
+            // Firebase'e kaydet
+            firebaseRepository.updateUser(defaultUser)
+            
+            android.util.Log.d("PhysiotherapyViewModel", "Initial user data created and saved to Firebase")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("PhysiotherapyViewModel", "Error creating initial user data", e)
         }
     }
     
@@ -594,7 +633,7 @@ class PhysiotherapyViewModel(
     }
     
     /**
-     * İlerleme raporu oluşturur
+     * İlerleme raporu oluşturur ve Firebase'e kaydeder
      */
     fun generateProgressReport(startDate: Date, endDate: Date): ProgressReport {
         val sessionsInRange = _user.value.completedSessions.filter { session ->
@@ -614,7 +653,7 @@ class PhysiotherapyViewModel(
             .take(5)
             .map { it.first }
         
-        return ProgressReport(
+        val report = ProgressReport(
             startDate = startDate,
             endDate = endDate,
             totalSessions = sessionsInRange.size,
@@ -623,6 +662,18 @@ class PhysiotherapyViewModel(
             mostFrequentExercises = exerciseFrequency,
             weeklyProgress = emptyList() // Haftalık detaylar için ayrı hesaplama gerekir
         )
+        
+        // Progress report'u Firebase'e kaydet
+        viewModelScope.launch {
+            try {
+                firebaseRepository.saveProgressReport(report)
+                android.util.Log.d("PhysiotherapyViewModel", "Progress report saved to Firebase")
+            } catch (e: Exception) {
+                android.util.Log.e("PhysiotherapyViewModel", "Error saving progress report to Firebase", e)
+            }
+        }
+        
+        return report
     }
     
     override fun onCleared() {

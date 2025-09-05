@@ -460,4 +460,36 @@ class FirebaseRepository {
             emit(null)
         }
     }
+    
+    // PROGRESS REPORT OPERATIONS
+    
+    /**
+     * Progress raporu kaydet
+     */
+    suspend fun saveProgressReport(report: ProgressReport): Boolean {
+        return try {
+            val userId = currentUserId ?: return false
+            
+            // Progress report'u Firestore'a kaydet
+            progressReportsCollection()
+                .document("${userId}_${System.currentTimeMillis()}")
+                .set(mapOf(
+                    "userId" to userId,
+                    "startDate" to report.startDate,
+                    "endDate" to report.endDate,
+                    "totalSessions" to report.totalSessions,
+                    "totalPoints" to report.totalPoints,
+                    "avgPainLevel" to report.avgPainLevel,
+                    "mostFrequentExercises" to report.mostFrequentExercises,
+                    "createdAt" to com.google.firebase.Timestamp.now()
+                ))
+                .await()
+                
+            android.util.Log.d("FirebaseRepo", "Progress report saved successfully")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseRepo", "Progress report kaydetme hatası", e)
+            false
+        }
+    }
 }

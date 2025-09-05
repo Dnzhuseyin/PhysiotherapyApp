@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1039715312277",
+    "project_id": "fizikteadavi",
+    "storage_bucket": "fizikteadavi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039715312277:android:f1bbd245585309ed03b19c",
+        "android_client_info": {
+          "package_name": "com.example.physiotherapyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdQ-Sm50M6WPTmej8YAa7lE95WzJV2q-c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

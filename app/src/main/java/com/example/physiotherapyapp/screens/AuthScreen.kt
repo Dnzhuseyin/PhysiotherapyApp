@@ -322,19 +322,26 @@ fun AuthScreen(
  */
 @Composable
 private fun FirebaseConnectionCard() {
-    val firebaseApp = remember { 
-        try {
-            FirebaseApp.getInstance()
-        } catch (e: Exception) {
-            null
-        }
-    }
+    var firebaseApp by remember { mutableStateOf<FirebaseApp?>(null) }
+    var auth by remember { mutableStateOf<FirebaseAuth?>(null) }
+    var firebaseError by remember { mutableStateOf<String?>(null) }
+    var authError by remember { mutableStateOf<String?>(null) }
     
-    val auth = remember { 
+    LaunchedEffect(Unit) {
         try {
-            FirebaseAuth.getInstance()
+            firebaseApp = FirebaseApp.getInstance()
+            android.util.Log.d("FirebaseTest", "Firebase App found: ${firebaseApp?.name}")
         } catch (e: Exception) {
-            null
+            firebaseError = e.message
+            android.util.Log.e("FirebaseTest", "Firebase App error", e)
+        }
+        
+        try {
+            auth = FirebaseAuth.getInstance()
+            android.util.Log.d("FirebaseTest", "Firebase Auth created successfully")
+        } catch (e: Exception) {
+            authError = e.message
+            android.util.Log.e("FirebaseTest", "Firebase Auth error", e)
         }
     }
     
@@ -367,10 +374,18 @@ private fun FirebaseConnectionCard() {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Firebase App: ${if (firebaseApp != null) "✅ Yüklendi" else "❌ Bulunamadı"}",
+                text = "Firebase App: ${if (firebaseApp != null) "✅ Yüklendi (${firebaseApp!!.name})" else "❌ Bulunamadı"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            
+            if (firebaseError != null) {
+                Text(
+                    text = "App Error: $firebaseError",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             
             Text(
                 text = "Firebase Auth: ${if (auth != null) "✅ Yüklendi" else "❌ Bulunamadı"}",
@@ -378,15 +393,29 @@ private fun FirebaseConnectionCard() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
+            if (authError != null) {
+                Text(
+                    text = "Auth Error: $authError",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            
             if (firebaseApp != null) {
                 Text(
-                    text = "App Name: ${firebaseApp.name}",
+                    text = "Project ID: ${firebaseApp!!.options.projectId ?: "null"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Text(
-                    text = "Project ID: ${firebaseApp.options.projectId ?: "null"}",
+                    text = "API Key: ${firebaseApp!!.options.apiKey?.take(20)}...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Text(
+                    text = "App ID: ${firebaseApp!!.options.applicationId?.take(30)}...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

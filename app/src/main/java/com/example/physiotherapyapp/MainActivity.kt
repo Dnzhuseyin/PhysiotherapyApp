@@ -22,6 +22,7 @@ import com.example.physiotherapyapp.ui.theme.PhysiotherapyAppTheme
 import com.example.physiotherapyapp.viewmodel.PhysiotherapyViewModel
 import com.example.physiotherapyapp.viewmodel.AuthViewModel
 import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 
 /**
@@ -36,10 +37,42 @@ class MainActivity : ComponentActivity() {
         
         // Firebase'i manuel olarak initialize et
         try {
-            FirebaseApp.initializeApp(this)
-            android.util.Log.d("MainActivity", "Firebase initialized successfully")
+            // Önce mevcut Firebase instance'ı kontrol et
+            val existingApp = try {
+                FirebaseApp.getInstance()
+            } catch (e: IllegalStateException) {
+                null
+            }
+            
+            if (existingApp == null) {
+                // Manuel olarak Firebase options ile initialize et
+                val options = FirebaseOptions.Builder()
+                    .setApplicationId("1:1039715312277:android:f1bbd245585309ed03b19c")
+                    .setApiKey("AIzaSyCdQ-Sm50M6WPTmej8YAa7lE95WzJV2q-c")
+                    .setProjectId("fizikteadavi")
+                    .setStorageBucket("fizikteadavi.firebasestorage.app")
+                    .build()
+                
+                FirebaseApp.initializeApp(this, options)
+                android.util.Log.d("MainActivity", "Firebase manually initialized with options")
+            } else {
+                android.util.Log.d("MainActivity", "Firebase already initialized: ${existingApp.name}")
+            }
+            
+            // Auth instance'ı test et
+            val auth = FirebaseAuth.getInstance()
+            android.util.Log.d("MainActivity", "Firebase Auth instance created: ${auth.app.name}")
+            
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Firebase initialization failed", e)
+            
+            // Fallback: Default initialize
+            try {
+                FirebaseApp.initializeApp(this)
+                android.util.Log.d("MainActivity", "Firebase default initialized as fallback")
+            } catch (fallbackException: Exception) {
+                android.util.Log.e("MainActivity", "Firebase fallback initialization also failed", fallbackException)
+            }
         }
         
         enableEdgeToEdge()

@@ -40,12 +40,22 @@ class FirebaseRepository {
      */
     suspend fun getUser(): FirestoreUser? {
         return try {
-            val userId = currentUserId ?: return null
-            usersCollection()
+            val userId = currentUserId ?: run {
+                android.util.Log.w("FirebaseRepo", "getUser: currentUserId is null")
+                return null
+            }
+            android.util.Log.d("FirebaseRepo", "getUser: userId=$userId")
+            
+            val document = usersCollection()
                 .document(userId)
                 .get()
                 .await()
-                .toObject(FirestoreUser::class.java)
+                
+            android.util.Log.d("FirebaseRepo", "getUser: document exists=${document.exists()}")
+            
+            val result = document.toObject(FirestoreUser::class.java)
+            android.util.Log.d("FirebaseRepo", "getUser: result=$result")
+            result
         } catch (e: Exception) {
             android.util.Log.e("FirebaseRepo", "User getirme hatası", e)
             null

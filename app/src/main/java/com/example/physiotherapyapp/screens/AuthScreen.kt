@@ -267,6 +267,45 @@ fun AuthScreen(
                 textAlign = TextAlign.Center
             )
             
+            // Debug bilgileri
+            if (authState is AuthState.Success || authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (authState is AuthState.Success) 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Debug Bilgi:",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        when (val currentState = authState) {
+                            is AuthState.Success -> {
+                                Text(
+                                    text = "✅ ${currentState.message}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            is AuthState.Error -> {
+                                Text(
+                                    text = "❌ ${currentState.message}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }
+            
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

@@ -111,20 +111,27 @@ class PhysiotherapyViewModel(
      * Firebase'den tüm kullanıcı verilerini yükler
      */
     fun loadDataFromFirebase() {
+        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Starting data load...")
+        
         viewModelScope.launch {
             try {
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Getting user data...")
+                
                 // Kullanıcı bilgilerini yükle
                 firebaseRepository.getUser()?.let { firestoreUser ->
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: User loaded: ${firestoreUser.uid}")
                     _user.value = firestoreUser.toLocal()
-                }
+                } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No user data found")
                 
                 // Kullanıcı profilini yükle
                 firebaseRepository.getUserProfile()?.let { profile ->
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Profile loaded: ${profile.category}")
                     _userProfile.value = profile
-                }
+                } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No profile found")
                 
                 // Session template'leri yükle
                 val templates = firebaseRepository.getUserSessionTemplates()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Templates loaded: ${templates.size}")
                 if (templates.isNotEmpty()) {
                     _sessionTemplates.clear()
                     _sessionTemplates.addAll(templates)
@@ -132,20 +139,26 @@ class PhysiotherapyViewModel(
                 
                 // Tamamlanan seansları yükle
                 val completedSessions = firebaseRepository.getUserCompletedSessions()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Sessions loaded: ${completedSessions.size}")
                 _user.value = _user.value.copy(completedSessions = completedSessions)
                 
                 // Ağrı kayıtlarını yükle
                 val painEntries = firebaseRepository.getUserPainEntries()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Pain entries loaded: ${painEntries.size}")
                 _user.value = _user.value.copy(painEntries = painEntries)
                 
                 // Rozetleri yükle
                 val badges = firebaseRepository.getUserBadges()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Badges loaded: ${badges.size}")
                 _user.value = _user.value.copy(badges = badges)
                 
                 // Hatırlatıcıları yükle
                 val reminders = firebaseRepository.getUserReminders()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Reminders loaded: ${reminders.size}")
                 _reminders.clear()
                 _reminders.addAll(reminders)
+                
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Data load completed successfully")
                 
             } catch (e: Exception) {
                 android.util.Log.e("PhysiotherapyViewModel", "Firebase veri yükleme hatası", e)

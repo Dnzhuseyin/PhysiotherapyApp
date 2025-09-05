@@ -70,6 +70,9 @@ fun HomeScreen(
                     // Hoşgeldin kartı
                     WelcomeCard(user = user)
                     
+                    // Debug kartı (geçici)
+                    DebugCard(user = user)
+                    
                     // Hızlı istatistikler
                     QuickStatsRow(user = user)
                     
@@ -521,5 +524,65 @@ private fun getMotivationData(totalSessions: Int): Pair<String, ImageVector> {
             "İnanılmaz! Siz bir efsanesiniz! Devam edin! 🔥",
             Icons.Default.Whatshot
         )
+    }
+}
+
+/**
+ * Debug kartı - Firebase bağlantı durumunu gösterir
+ */
+@Composable
+private fun DebugCard(user: User) {
+    val auth = remember { com.google.firebase.auth.FirebaseAuth.getInstance() }
+    val currentUser = auth.currentUser
+    
+    EnhancedCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BugReport,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "🔧 Debug Bilgileri",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Firebase Auth User: ${currentUser?.uid ?: "null"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Text(
+                text = "Firebase Auth Email: ${currentUser?.email ?: "null"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Text(
+                text = "Local User Name: ${user.name}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Text(
+                text = "Local User Sessions: ${user.totalSessions}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 } 

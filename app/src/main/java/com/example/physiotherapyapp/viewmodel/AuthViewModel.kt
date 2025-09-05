@@ -28,6 +28,14 @@ class AuthViewModel : ViewModel() {
     val currentUser: StateFlow<FirebaseUser?> = _currentUser
     
     init {
+        // Network error için emulator test
+        try {
+            auth.useEmulator("10.0.2.2", 9099)
+            android.util.Log.d("AuthViewModel", "Firebase Auth Emulator enabled for testing")
+        } catch (e: Exception) {
+            android.util.Log.d("AuthViewModel", "Firebase Auth Emulator not available, using production")
+        }
+        
         // Kullanıcının giriş durumunu kontrol et
         checkAuthState()
         
@@ -98,6 +106,10 @@ class AuthViewModel : ViewModel() {
                     when {
                         e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
                             "Firebase Console'da Authentication enable edilmemiş! Lütfen console'dan aktifleştirin."
+                        e.message?.contains("network error") == true -> 
+                            "İnternet bağlantısı yok! WiFi/Mobil veri kontrol edin."
+                        e.message?.contains("timeout") == true -> 
+                            "Bağlantı zaman aşımı! İnternet hızınızı kontrol edin."
                         e.message?.contains("There is no user record") == true -> 
                             "Bu email ile kayıtlı kullanıcı yok. Önce kayıt olun."
                         e.message?.contains("password is invalid") == true -> 
@@ -162,6 +174,10 @@ class AuthViewModel : ViewModel() {
                     when {
                         e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
                             "Firebase Console'da Authentication enable edilmemiş! Lütfen console'dan aktifleştirin."
+                        e.message?.contains("network error") == true -> 
+                            "İnternet bağlantısı yok! WiFi/Mobil veri kontrol edin."
+                        e.message?.contains("timeout") == true -> 
+                            "Bağlantı zaman aşımı! İnternet hızınızı kontrol edin."
                         e.message?.contains("email-already-in-use") == true -> "Bu e-posta adresi zaten kullanımda"
                         e.message?.contains("weak-password") == true -> "Şifre çok zayıf (en az 6 karakter)"
                         e.message?.contains("invalid-email") == true -> "Geçersiz e-posta adresi"

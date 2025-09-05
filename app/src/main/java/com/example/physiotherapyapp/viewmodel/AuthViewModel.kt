@@ -97,11 +97,15 @@ class AuthViewModel : ViewModel() {
                 _authState.value = AuthState.Error(
                     when {
                         e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
-                            "Firebase yapılandırma hatası! google-services.json dosyası bulunamadı."
-                        e.message?.contains("password") == true -> "Şifre yanlış"
-                        e.message?.contains("email") == true -> "E-posta adresi geçersiz"
-                        e.message?.contains("user-not-found") == true -> "Kullanıcı bulunamadı"
-                        e.message?.contains("too-many-requests") == true -> "Çok fazla deneme. Lütfen bekleyin"
+                            "Firebase Console'da Authentication enable edilmemiş! Lütfen console'dan aktifleştirin."
+                        e.message?.contains("There is no user record") == true -> 
+                            "Bu email ile kayıtlı kullanıcı yok. Önce kayıt olun."
+                        e.message?.contains("password is invalid") == true -> 
+                            "Şifre hatalı"
+                        e.message?.contains("email address is badly formatted") == true -> 
+                            "Email formatı geçersiz"
+                        e.message?.contains("too-many-requests") == true -> 
+                            "Çok fazla deneme. Lütfen bekleyin"
                         else -> "Giriş hatası: ${e.message}"
                     }
                 )
@@ -157,7 +161,7 @@ class AuthViewModel : ViewModel() {
                 _authState.value = AuthState.Error(
                     when {
                         e.message?.contains("CONFIGURATION_NOT_FOUND") == true -> 
-                            "Firebase yapılandırma hatası! google-services.json dosyası bulunamadı."
+                            "Firebase Console'da Authentication enable edilmemiş! Lütfen console'dan aktifleştirin."
                         e.message?.contains("email-already-in-use") == true -> "Bu e-posta adresi zaten kullanımda"
                         e.message?.contains("weak-password") == true -> "Şifre çok zayıf (en az 6 karakter)"
                         e.message?.contains("invalid-email") == true -> "Geçersiz e-posta adresi"

@@ -658,11 +658,42 @@ class PhysiotherapyViewModel(
      * AI önerisini kabul eder ve seans şablonu oluşturur
      */
     fun acceptAIRecommendation(recommendation: AISessionRecommendation) {
-        val exercises = recommendation.exercises.map { exerciseName ->
-            Exercise(name = exerciseName, description = "")
-        }
+        android.util.Log.d("PhysiotherapyViewModel", "acceptAIRecommendation: ${recommendation.sessionName}")
         
-        createSessionTemplate(recommendation.sessionName, exercises)
+        viewModelScope.launch {
+            try {
+                // AI recommendation'ı SessionTemplate'e çevir
+                val sessionTemplate = SessionTemplate(
+                    name = recommendation.sessionName,
+                    exercises = recommendation.exercises.map { exerciseName ->
+                        Exercise(
+                            name = exerciseName,
+                            description = "AI tarafından önerilen egzersiz"
+                        )
+                    },
+                    estimatedDuration = recommendation.estimatedDuration.toIntOrNull() ?: recommendation.exercises.size * 5,
+                    isAIGenerated = true
+                )
+                
+                android.util.Log.d("PhysiotherapyViewModel", "acceptAIRecommendation: Created template with ${sessionTemplate.exercises.size} exercises, AI: ${sessionTemplate.isAIGenerated}")
+                
+                // Firebase'e kaydet
+                val success = firebaseRepository.saveSessionTemplate(sessionTemplate)
+                android.util.Log.d("PhysiotherapyViewModel", "acceptAIRecommendation: Firebase save result: $success")
+                
+                if (success) {
+                    // Local listeye ekle
+                    _sessionTemplates.add(sessionTemplate)
+                    android.util.Log.d("PhysiotherapyViewModel", "acceptAIRecommendation: Added to local list. Total templates: ${_sessionTemplates.size}")
+                    android.util.Log.d("PhysiotherapyViewModel", "acceptAIRecommendation: AI templates in list: ${_sessionTemplates.count { it.isAIGenerated }}")
+                } else {
+                    android.util.Log.e("PhysiotherapyViewModel", "acceptAIRecommendation: Failed to save to Firebase")
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e("PhysiotherapyViewModel", "acceptAIRecommendation: Error", e)
+            }
+        }
     }
     
     /**
@@ -785,6 +816,8 @@ class PhysiotherapyViewModel(
         super.onCleared()
         // Firebase connections otomatik temizlenir
     }
+    
+    // Duplicate acceptAIRecommendation metodu kaldırıldı - line 660'da mevcut
 }
 
 /**

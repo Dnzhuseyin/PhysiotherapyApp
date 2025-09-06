@@ -144,6 +144,8 @@ class FirebaseRepository {
     suspend fun saveCompletedSession(session: Session): Boolean {
         return try {
             val userId = currentUserId ?: return false
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Saving session for userId: $userId")
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Session - ${session.templateName}, Points: ${session.pointsEarned}")
             
             val firestoreSession = FirestoreSession(
                 userId = userId,
@@ -158,13 +160,17 @@ class FirebaseRepository {
                 },
                 totalExercises = session.exercises.size,
                 completedExercises = session.exercises.count { it.isCompleted },
-                pointsEarned = 10,
-                status = "COMPLETED"
+                pointsEarned = session.pointsEarned,
+                status = "COMPLETED",
+                startedAt = com.google.firebase.Timestamp(session.startDate),
+                completedAt = com.google.firebase.Timestamp(session.endDate ?: java.util.Date())
             )
             
-            sessionsCollection()
+            val docRef = sessionsCollection()
                 .add(firestoreSession)
                 .await()
+            
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Session saved with ID: ${docRef.id}")
             true
         } catch (e: Exception) {
             android.util.Log.e("FirebaseRepo", "Seans kaydetme hatası", e)
@@ -186,6 +192,7 @@ class FirebaseRepository {
                 .orderBy("completedAt", Query.Direction.DESCENDING)
             
             android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Query created")
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Searching for userId='$userId', status='COMPLETED'")
             
             val snapshot = query.get().await()
             android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Query executed, documents=${snapshot.size()}")

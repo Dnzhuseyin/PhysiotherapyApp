@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import com.example.physiotherapyapp.components.*
 import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
@@ -84,10 +85,49 @@ fun HomeScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text("Completed Sessions Count: ${completedSessions.size}")
-                            Text("Sessions: ${completedSessions.map { "${it.templateName} (${it.pointsEarned} pts)" }}")
-                        }
+                    Text("Completed Sessions Count: ${completedSessions.size}")
+                    Text("Sessions: ${completedSessions.map { "${it.templateName} (${it.pointsEarned} pts)" }}")
+                    
+                    // Test butonu - Manuel seans oluştur
+                    val coroutineScope = rememberCoroutineScope()
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                try {
+                                    // Test için manuel completed session oluştur
+                                    val testSession = com.example.physiotherapyapp.data.Session(
+                                        templateId = "test-template",
+                                        templateName = "Test Seansı",
+                                        exercises = listOf(
+                                            com.example.physiotherapyapp.data.Exercise("Test Egzersiz 1", "Test açıklama"),
+                                            com.example.physiotherapyapp.data.Exercise("Test Egzersiz 2", "Test açıklama")
+                                        ),
+                                        startDate = java.util.Date(System.currentTimeMillis() - 3600000), // 1 saat önce
+                                        endDate = java.util.Date(),
+                                        isCompleted = true,
+                                        pointsEarned = 10,
+                                        currentExerciseIndex = 2
+                                    )
+                                    
+                                    // Firebase'e kaydet
+                                    val repository = com.example.physiotherapyapp.repository.FirebaseRepository()
+                                    val success = repository.saveCompletedSession(testSession)
+                                    android.util.Log.d("HomeScreen", "🧪 Test session save result: $success")
+                                    
+                                    if (success) {
+                                        android.util.Log.d("HomeScreen", "🧪 Test session saved! Restart app to see changes.")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("HomeScreen", "🧪 Test session save error", e)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text("🧪 TEST SESSION OLUŞTUR")
                     }
+                }
+            }
                     
                     // Hızlı istatistikler
                     QuickStatsRow(user = user)

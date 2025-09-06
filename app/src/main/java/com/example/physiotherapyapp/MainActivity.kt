@@ -221,7 +221,15 @@ fun PhysiotherapyApp() {
             composable(NavigationRoutes.MAIN_PROFILE) {
                 ProfileScreen(
                     user = user,
-                    onBackClick = { /* Bottom nav kullanıldığı için geri buton yok */ }
+                    onBackClick = { /* Bottom nav kullanıldığı için geri buton yok */ },
+                    onLogout = {
+                        // Firebase'den çıkış yap
+                        FirebaseAuth.getInstance().signOut()
+                        // Auth ekranına yönlendir
+                        navController.navigate(NavigationRoutes.AUTH) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             

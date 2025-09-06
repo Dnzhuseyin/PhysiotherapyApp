@@ -38,7 +38,8 @@ import com.example.physiotherapyapp.services.BadgeService
 @Composable
 fun ProfileScreen(
     user: User,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onLogout: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -64,184 +65,136 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Profil başlığı
-            ProfileHeader()
+            // Kullanıcı bilgileri kartı
+            UserInfoCard(user = user)
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // İstatistik kartları
-            StatisticsCards(user = user)
-            
-            Spacer(modifier = Modifier.height(24.dp))
+            // İstatistikler kartı
+            StatsCard(user = user)
             
             // Rozetler bölümü
-            BadgesSection(badges = user.badges)
+            BadgesSection(user = user)
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             
-            // İlerleme bilgisi
-            ProgressSection(user = user)
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Motivasyon mesajı
-            MotivationMessage(totalSessions = user.totalSessions)
+            // Çıkış butonu
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                TextButton(
+                    onClick = onLogout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Çıkış Yap",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
         }
     }
 }
 
 /**
- * Profil başlık bölümü
+ * Kullanıcı bilgileri kartı
  */
 @Composable
-private fun ProfileHeader() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun UserInfoCard(user: User) {
+    EnhancedCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // Profil ikonu
-        Card(
-            modifier = Modifier.size(120.dp),
-            shape = RoundedCornerShape(60.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Profil avatarı
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Profil",
-                    modifier = Modifier.size(60.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "Fizik Tedavi Kullanıcısı",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    }
-}
-
-/**
- * İstatistik kartları bölümü
- */
-@Composable
-private fun StatisticsCards(user: User) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Toplam seans sayısı
-        StatCard(
-            modifier = Modifier.weight(1f),
-            title = "Toplam Seans",
-            value = user.totalSessions.toString(),
-            icon = Icons.Default.EmojiEvents,
-            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        
-        // Toplam puan
-        StatCard(
-            modifier = Modifier.weight(1f),
-            title = "Toplam Puan",
-            value = user.totalPoints.toString(),
-            icon = Icons.Default.Star,
-            backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    }
-}
-
-/**
- * Tek bir istatistik kartı
- */
-@Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    backgroundColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color
-) {
-    Card(
-        modifier = modifier.height(140.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                modifier = Modifier.size(32.dp),
-                tint = contentColor
-            )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(20.dp))
             
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-            
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
-            )
+            // Kullanıcı bilgileri
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = "Fizik Tedavi Kullanıcısı",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Seviye göstergesi
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Seviye",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Seviye ${user.currentLevel}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
 
 /**
- * İlerleme bölümü
+ * İstatistikler kartı
  */
 @Composable
-private fun ProgressSection(user: User) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+private fun StatsCard(user: User) {
+    EnhancedCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                text = "İlerleme Durumu",
+                text = "İstatistiklerim",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -249,100 +202,91 @@ private fun ProgressSection(user: User) {
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Puan başına seans oranı
-            if (user.totalSessions > 0) {
-                val averagePointsPerSession = user.totalPoints / user.totalSessions
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Seans başına ortalama puan:",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "$averagePointsPerSession",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
+            // İstatistik grid'i
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.height(200.dp)
+            ) {
+                item {
+                    StatItem(
+                        title = "Toplam Seans",
+                        value = user.totalSessions.toString(),
+                        icon = Icons.Default.EmojiEvents
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(12.dp))
+                item {
+                    StatItem(
+                        title = "Toplam Puan",
+                        value = user.totalPoints.toString(),
+                        icon = Icons.Default.Star
+                    )
+                }
+                item {
+                    StatItem(
+                        title = "Tamamlanan Egzersiz",
+                        value = user.completedSessions.sumOf { it.exercises.count { ex -> ex.isCompleted } }.toString(),
+                        icon = Icons.Default.EmojiEvents
+                    )
+                }
+                item {
+                    StatItem(
+                        title = "Aktif Gün",
+                        value = user.completedSessions.size.toString(),
+                        icon = Icons.Default.Star
+                    )
+                }
             }
-            
-            // Hedef bilgisi
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Sonraki hedef:",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "${((user.totalSessions / 5) + 1) * 5} seans",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // İlerleme çubuğu
-            val progressToNextTarget = (user.totalSessions % 5) / 5f
-            LinearProgressIndicator(
-                progress = { progressToNextTarget },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.secondaryContainer
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "${user.totalSessions % 5}/5 hedefine ulaşmak için",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
 
 /**
- * Motivasyon mesajı
+ * Tek bir istatistik öğesi
  */
 @Composable
-private fun MotivationMessage(totalSessions: Int) {
-    val message = when {
-        totalSessions == 0 -> "İlk seansınızı başlatmaya hazır mısınız? 💪"
-        totalSessions < 5 -> "Harika başlangıç! Devam edin! 🌟"
-        totalSessions < 10 -> "Muhteşem ilerleme kaydediyorsunuz! 🎯"
-        totalSessions < 20 -> "Siz gerçek bir fizik tedavi şampiyonusunuz! 🏆"
-        else -> "İnanılmaz! Siz bir efsanesiniz! 🌟✨"
-    }
-    
+private fun StatItem(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        )
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(16.dp)
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -350,8 +294,9 @@ private fun MotivationMessage(totalSessions: Int) {
  * Rozetler bölümü
  */
 @Composable
-private fun BadgesSection(badges: List<Badge>) {
+private fun BadgesSection(user: User) {
     val badgeService = BadgeService()
+    val badges = user.badges
     
     EnhancedCard(
         modifier = Modifier.fillMaxWidth()
@@ -359,43 +304,39 @@ private fun BadgesSection(badges: List<Badge>) {
         Column(
             modifier = Modifier.padding(20.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "🏆 Kazanılan Rozetler",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${badges.size}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = "Rozetlerim",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
             
             if (badges.isEmpty()) {
-                // Boş durum
+                // Henüz rozet yok
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "🎯",
-                        fontSize = 48.sp
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = "Rozet yok",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
                     Text(
                         text = "Henüz rozet kazanmadınız",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     Text(
                         text = "İlk seansınızı tamamlayarak başlayın!",
                         style = MaterialTheme.typography.bodyMedium,
@@ -478,4 +419,4 @@ private fun BadgeCard(
             )
         }
     }
-} 
+}

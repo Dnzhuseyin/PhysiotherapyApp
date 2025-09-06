@@ -123,23 +123,33 @@ class PhysiotherapyViewModel(
                 android.util.Log.d("PhysiotherapyViewModel", "Local Badges BEFORE: ${_user.value.badges.size}")
                 
                 // Kullanıcı bilgilerini yükle
-                val existingUser = firebaseRepository.getUser()
-                if (existingUser != null) {
-                    android.util.Log.d("PhysiotherapyViewModel", "User loaded from Firebase: ${existingUser.uid}")
-                    _user.value = existingUser.toLocal()
-                } else {
-                    android.util.Log.w("PhysiotherapyViewModel", "No user data found, creating initial user")
-                    // Yeni kullanıcı için initial data oluştur
-                    createInitialUserData()
+                try {
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** STEP 1: Loading User ***")
+                    val existingUser = firebaseRepository.getUser()
+                    if (existingUser != null) {
+                        android.util.Log.d("PhysiotherapyViewModel", "User loaded from Firebase: ${existingUser.uid}")
+                        _user.value = existingUser.toLocal()
+                    } else {
+                        android.util.Log.w("PhysiotherapyViewModel", "No user data found, creating initial user")
+                        // Yeni kullanıcı için initial data oluştur
+                        createInitialUserData()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("PhysiotherapyViewModel", "loadDataFromFirebase: ERROR in Step 1 (User loading)", e)
                 }
                 
                 // Kullanıcı profilini yükle
-                firebaseRepository.getUserProfile()?.let { profile ->
-                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Profile loaded: ${profile.category}")
-                    _userProfile.value = profile
-                } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No profile found")
+                try {
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** STEP 2: Loading Profile ***")
+                    firebaseRepository.getUserProfile()?.let { profile ->
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Profile loaded: ${profile.category}")
+                        _userProfile.value = profile
+                    } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No profile found")
+                } catch (e: Exception) {
+                    android.util.Log.e("PhysiotherapyViewModel", "loadDataFromFirebase: ERROR in Step 2 (Profile loading)", e)
+                }
                 
-                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** BEFORE SESSION TEMPLATES ***")
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** STEP 3: BEFORE SESSION TEMPLATES ***")
                 
                 // Session template'leri yükle
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: About to call getUserSessionTemplates")

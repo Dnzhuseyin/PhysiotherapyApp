@@ -48,6 +48,26 @@ fun SessionHistoryScreen(
             )
         }
     ) { paddingValues ->
+        // Debug bilgisi
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🔧 DEBUG: Session History",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text("Completed Sessions Count: ${completedSessions.size}")
+                Text("Sessions: ${completedSessions.map { "${it.templateName} (${it.pointsEarned} pts)" }}")
+            }
+        }
+        
         if (completedSessions.isEmpty()) {
             // Henüz seans yapılmamış
             EmptyHistoryScreen()

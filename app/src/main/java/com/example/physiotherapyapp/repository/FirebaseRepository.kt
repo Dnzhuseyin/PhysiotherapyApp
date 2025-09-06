@@ -279,16 +279,30 @@ class FirebaseRepository {
      */
     suspend fun getUserPainEntries(): List<PainEntry> {
         return try {
-            val userId = currentUserId ?: return emptyList()
-            painEntriesCollection()
+            val userId = currentUserId ?: run {
+                android.util.Log.w("FirebaseRepo", "getUserPainEntries: currentUserId is null")
+                return emptyList()
+            }
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Fetching pain entries for userId: $userId")
+            
+            val querySnapshot = painEntriesCollection()
                 .whereEqualTo("userId", userId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
-                .toObjects(FirestorePainEntry::class.java)
-                .map { it.toLocal() }
+            
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Query returned ${querySnapshot.size()} documents")
+            
+            val firestoreEntries = querySnapshot.toObjects(FirestorePainEntry::class.java)
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Converted to ${firestoreEntries.size} FirestorePainEntry objects")
+            
+            val localEntries = firestoreEntries.map { it.toLocal() }
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Final result: ${localEntries.size} PainEntry objects")
+            
+            return localEntries
         } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Ağrı kayıtları getirme hatası", e)
+            android.util.Log.e("FirebaseRepo", "getUserPainEntries: Ağrı kayıtları getirme hatası", e)
+            android.util.Log.e("FirebaseRepo", "getUserPainEntries: Error details - ${e.javaClass.simpleName}: ${e.message}")
             emptyList()
         }
     }
@@ -413,29 +427,41 @@ class FirebaseRepository {
      */
     suspend fun getUserBadges(): List<Badge> {
         return try {
-            val userId = currentUserId ?: return emptyList()
-            badgesCollection()
+            val userId = currentUserId ?: run {
+                android.util.Log.w("FirebaseRepo", "getUserBadges: currentUserId is null")
+                return emptyList()
+            }
+            android.util.Log.d("FirebaseRepo", "getUserBadges: Fetching badges for userId: $userId")
+            
+            val querySnapshot = badgesCollection()
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("isUnlocked", true)
                 .get()
                 .await()
-                .documents
-                .map { document ->
-                    Badge(
-                        id = document.id,
-                        name = document.getString("name") ?: "",
-                        description = document.getString("description") ?: "",
-                        iconName = document.getString("iconName") ?: "",
-                        category = try {
-                            BadgeCategory.valueOf(document.getString("badgeType") ?: "SESSIONS")
-                        } catch (e: Exception) {
-                            BadgeCategory.SESSIONS
-                        },
-                        unlockedDate = document.getTimestamp("unlockedAt")?.toDate() ?: java.util.Date()
-                    )
-                }
+            
+            android.util.Log.d("FirebaseRepo", "getUserBadges: Query returned ${querySnapshot.size()} documents")
+            
+            val badges = querySnapshot.documents.map { document ->
+                android.util.Log.d("FirebaseRepo", "getUserBadges: Processing badge document: ${document.id}")
+                Badge(
+                    id = document.id,
+                    name = document.getString("name") ?: "",
+                    description = document.getString("description") ?: "",
+                    iconName = document.getString("iconName") ?: "",
+                    category = try {
+                        BadgeCategory.valueOf(document.getString("badgeType") ?: "SESSIONS")
+                    } catch (e: Exception) {
+                        BadgeCategory.SESSIONS
+                    },
+                    unlockedDate = document.getTimestamp("unlockedAt")?.toDate() ?: java.util.Date()
+                )
+            }
+            
+            android.util.Log.d("FirebaseRepo", "getUserBadges: Final result: ${badges.size} Badge objects")
+            return badges
         } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Rozetler getirme hatası", e)
+            android.util.Log.e("FirebaseRepo", "getUserBadges: Rozetler getirme hatası", e)
+            android.util.Log.e("FirebaseRepo", "getUserBadges: Error details - ${e.javaClass.simpleName}: ${e.message}")
             emptyList()
         }
     }

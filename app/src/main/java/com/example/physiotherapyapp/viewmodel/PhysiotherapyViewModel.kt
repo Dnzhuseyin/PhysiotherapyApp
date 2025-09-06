@@ -115,15 +115,19 @@ class PhysiotherapyViewModel(
         
         viewModelScope.launch {
             try {
-                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Getting user data...")
+                android.util.Log.d("PhysiotherapyViewModel", "==================== DATA LOAD START ====================")
+                android.util.Log.d("PhysiotherapyViewModel", "Firebase Auth User: ${com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid}")
+                android.util.Log.d("PhysiotherapyViewModel", "Local User BEFORE: ${_user.value.name}, Sessions: ${_user.value.totalSessions}")
+                android.util.Log.d("PhysiotherapyViewModel", "Local Pain Entries BEFORE: ${_painEntries.size}")
+                android.util.Log.d("PhysiotherapyViewModel", "Local Badges BEFORE: ${_user.value.badges.size}")
                 
                 // Kullanıcı bilgilerini yükle
                 val existingUser = firebaseRepository.getUser()
                 if (existingUser != null) {
-                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: User loaded: ${existingUser.uid}")
+                    android.util.Log.d("PhysiotherapyViewModel", "User loaded from Firebase: ${existingUser.uid}")
                     _user.value = existingUser.toLocal()
                 } else {
-                    android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No user data found, creating initial user")
+                    android.util.Log.w("PhysiotherapyViewModel", "No user data found, creating initial user")
                     // Yeni kullanıcı için initial data oluştur
                     createInitialUserData()
                 }
@@ -376,6 +380,10 @@ class PhysiotherapyViewModel(
      * Ağrı kaydı ekler
      */
     fun addPainEntry(sessionId: String, painLevel: Int, bodyPart: String, notes: String) {
+        android.util.Log.d("PhysiotherapyViewModel", "==================== ADDING PAIN ENTRY ====================")
+        android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: SessionId: $sessionId, PainLevel: $painLevel, BodyPart: $bodyPart")
+        android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: Local pain entries BEFORE: ${_painEntries.size}")
+        
         val painEntry = PainEntry(
             sessionId = sessionId,
             painLevel = painLevel,
@@ -383,12 +391,23 @@ class PhysiotherapyViewModel(
             notes = notes
         )
         
+        android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: Created PainEntry with ID: ${painEntry.id}")
+        
         _painEntries.add(painEntry)
         _user.value = _user.value.copy(painEntries = _user.value.painEntries + painEntry)
         
+        android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: Local pain entries AFTER: ${_painEntries.size}")
+        android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: User pain entries AFTER: ${_user.value.painEntries.size}")
+        
         // Firebase'e kaydet
         viewModelScope.launch {
-            firebaseRepository.savePainEntry(painEntry)
+            try {
+                android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: Saving to Firebase...")
+                val result = firebaseRepository.savePainEntry(painEntry)
+                android.util.Log.d("PhysiotherapyViewModel", "addPainEntry: Firebase save result: $result")
+            } catch (e: Exception) {
+                android.util.Log.e("PhysiotherapyViewModel", "addPainEntry: Firebase save error", e)
+            }
         }
     }
     

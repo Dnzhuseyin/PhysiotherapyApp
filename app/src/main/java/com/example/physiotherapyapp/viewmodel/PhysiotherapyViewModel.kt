@@ -153,13 +153,19 @@ class PhysiotherapyViewModel(
                 }
                 
                 // Tamamlanan seansları yükle
-                val completedSessions = firebaseRepository.getUserCompletedSessions()
-                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Sessions loaded: ${completedSessions.size}")
-                _user.value = _user.value.copy(completedSessions = completedSessions)
-                
-                // Local completedSessions listesini de güncelle
-                _completedSessions.clear()
-                _completedSessions.addAll(completedSessions)
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: About to call getUserCompletedSessions")
+                try {
+                    val completedSessions = firebaseRepository.getUserCompletedSessions()
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Sessions loaded: ${completedSessions.size}")
+                    _user.value = _user.value.copy(completedSessions = completedSessions)
+                    
+                    // Local completedSessions listesini de güncelle
+                    _completedSessions.clear()
+                    _completedSessions.addAll(completedSessions)
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Local completedSessions updated: ${_completedSessions.size}")
+                } catch (e: Exception) {
+                    android.util.Log.e("PhysiotherapyViewModel", "loadDataFromFirebase: Error loading completed sessions", e)
+                }
                 
                 // Ağrı kayıtlarını yükle
                 val painEntries = firebaseRepository.getUserPainEntries()

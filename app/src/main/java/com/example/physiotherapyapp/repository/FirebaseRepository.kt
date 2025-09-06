@@ -143,9 +143,17 @@ class FirebaseRepository {
      */
     suspend fun saveCompletedSession(session: Session): Boolean {
         return try {
-            val userId = currentUserId ?: return false
-            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Saving session for userId: $userId")
+            val userId = currentUserId ?: run {
+                android.util.Log.e("FirebaseRepo", "saveCompletedSession: currentUserId is null!")
+                return false
+            }
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Starting save for userId: $userId")
             android.util.Log.d("FirebaseRepo", "saveCompletedSession: Session - ${session.templateName}, Points: ${session.pointsEarned}")
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Session ID: ${session.id}")
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Template ID: ${session.templateId}")
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Exercise count: ${session.exercises.size}")
+            
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Creating FirestoreSession object...")
             
             val firestoreSession = FirestoreSession(
                 userId = userId,
@@ -165,6 +173,9 @@ class FirebaseRepository {
                 startedAt = com.google.firebase.Timestamp(session.startDate),
                 completedAt = com.google.firebase.Timestamp(session.endDate ?: java.util.Date())
             )
+            
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: FirestoreSession created successfully")
+            android.util.Log.d("FirebaseRepo", "saveCompletedSession: Attempting to save to collection...")
             
             val docRef = sessionsCollection()
                 .add(firestoreSession)

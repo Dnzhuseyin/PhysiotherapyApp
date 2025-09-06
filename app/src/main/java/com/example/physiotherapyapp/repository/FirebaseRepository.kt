@@ -217,14 +217,22 @@ class FirebaseRepository {
     suspend fun getUserCompletedSessions(): List<Session> {
         return try {
             val userId = currentUserId ?: return emptyList()
-            sessionsCollection()
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: userId=$userId")
+            
+            val query = sessionsCollection()
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("status", "COMPLETED")
                 .orderBy("completedAt", Query.Direction.DESCENDING)
-                .get()
-                .await()
-                .toObjects(FirestoreSession::class.java)
-                .map { firestoreSession ->
+            
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Query created")
+            
+            val snapshot = query.get().await()
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Query executed, documents=${snapshot.size()}")
+            
+            val firestoreSessions = snapshot.toObjects(FirestoreSession::class.java)
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: FirestoreSessions converted: ${firestoreSessions.size}")
+            
+            val sessions = firestoreSessions.map { firestoreSession ->
                     Session(
                         id = firestoreSession.id,
                         templateId = firestoreSession.templateId,
@@ -241,6 +249,9 @@ class FirebaseRepository {
                         endDate = firestoreSession.completedAt?.toDate()
                     )
                 }
+            
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Final sessions count: ${sessions.size}")
+            sessions
         } catch (e: Exception) {
             android.util.Log.e("FirebaseRepo", "Seanslar getirme hatası", e)
             emptyList()

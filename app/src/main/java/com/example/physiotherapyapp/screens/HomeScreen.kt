@@ -39,6 +39,7 @@ import com.example.physiotherapyapp.ui.theme.*
 fun HomeScreen(
     user: User,
     recentTemplates: List<SessionTemplate> = emptyList(),
+    completedSessions: List<com.example.physiotherapyapp.data.Session> = emptyList(),
     onCreateNewSession: () -> Unit,
     navController: NavController
 ) {
@@ -71,7 +72,22 @@ fun HomeScreen(
                     WelcomeCard(user = user)
                     
                     // Debug kartı (geçici)
-                    DebugCard(user = user)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "🔧 DEBUG: Session History",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("Completed Sessions Count: ${completedSessions.size}")
+                            Text("Sessions: ${completedSessions.map { "${it.templateName} (${it.pointsEarned} pts)" }}")
+                        }
+                    }
                     
                     // Hızlı istatistikler
                     QuickStatsRow(user = user)

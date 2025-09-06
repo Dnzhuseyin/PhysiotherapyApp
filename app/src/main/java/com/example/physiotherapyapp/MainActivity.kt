@@ -184,6 +184,7 @@ fun PhysiotherapyApp() {
                 HomeScreen(
                     user = user,
                     recentTemplates = sessionTemplates,
+                    completedSessions = completedSessions,
                     onCreateNewSession = {
                         navController.navigate(NavigationRoutes.EXERCISE_SELECTION)
                     },

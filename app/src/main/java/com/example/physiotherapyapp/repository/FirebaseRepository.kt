@@ -124,17 +124,9 @@ class FirebaseRepository {
      * Session template kaydet
      */
     suspend fun saveSessionTemplate(template: SessionTemplate): Boolean {
-        return try {
-            val userId = currentUserId ?: return false
-            val firestoreTemplate = template.toFirestore(userId)
-            sessionTemplatesCollection()
-                .add(firestoreTemplate)
-                .await()
-            true
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Template kaydetme hatası", e)
-            false
-        }
+        // Temporarily disabled - conversion issues
+        android.util.Log.w("FirebaseRepo", "saveSessionTemplate: Temporarily disabled")
+        return false
     }
     
     /**
@@ -262,14 +254,23 @@ class FirebaseRepository {
      */
     suspend fun savePainEntry(painEntry: PainEntry): Boolean {
         return try {
-            val userId = currentUserId ?: return false
+            val userId = currentUserId ?: run {
+                android.util.Log.w("FirebaseRepo", "savePainEntry: currentUserId is null")
+                return false
+            }
+            android.util.Log.d("FirebaseRepo", "savePainEntry: Saving pain entry for userId: $userId")
+            android.util.Log.d("FirebaseRepo", "savePainEntry: PainEntry - SessionId: ${painEntry.sessionId}, Level: ${painEntry.painLevel}, BodyPart: ${painEntry.bodyPart}")
+            
             val firestorePainEntry = painEntryToFirestore(painEntry, userId)
-            painEntriesCollection()
-                .add(firestorePainEntry)
-                .await()
+            android.util.Log.d("FirebaseRepo", "savePainEntry: Converted to Firestore format - userId: ${firestorePainEntry.userId}")
+            
+            val documentRef = painEntriesCollection().add(firestorePainEntry).await()
+            android.util.Log.d("FirebaseRepo", "savePainEntry: Successfully saved with document ID: ${documentRef.id}")
+            
             true
         } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Ağrı kaydı kaydetme hatası", e)
+            android.util.Log.e("FirebaseRepo", "savePainEntry: Ağrı kaydı kaydetme hatası", e)
+            android.util.Log.e("FirebaseRepo", "savePainEntry: Error details - ${e.javaClass.simpleName}: ${e.message}")
             false
         }
     }
@@ -284,14 +285,23 @@ class FirebaseRepository {
                 return emptyList()
             }
             android.util.Log.d("FirebaseRepo", "getUserPainEntries: Fetching pain entries for userId: $userId")
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Collection path: ${painEntriesCollection().path}")
             
+            // Önce tüm collection'ı çek - debug için
+            val allDocuments = painEntriesCollection().get().await()
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Total documents in collection: ${allDocuments.size()}")
+            
+            for (doc in allDocuments.documents) {
+                android.util.Log.d("FirebaseRepo", "getUserPainEntries: Document ${doc.id} - userId: ${doc.getString("userId")}")
+            }
+            
+            // OrderBy kaldırıldı - Firestore index sorunu olabilir
             val querySnapshot = painEntriesCollection()
                 .whereEqualTo("userId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
             
-            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Query returned ${querySnapshot.size()} documents")
+            android.util.Log.d("FirebaseRepo", "getUserPainEntries: Query with userId filter returned ${querySnapshot.size()} documents")
             
             val firestoreEntries = querySnapshot.toObjects(FirestorePainEntry::class.java)
             android.util.Log.d("FirebaseRepo", "getUserPainEntries: Converted to ${firestoreEntries.size} FirestorePainEntry objects")

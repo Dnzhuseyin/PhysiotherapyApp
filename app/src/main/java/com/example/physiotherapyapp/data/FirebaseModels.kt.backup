@@ -112,6 +112,19 @@ data class FirestoreSessionExercise(
     @ServerTimestamp val completedAt: Timestamp? = null
 )
 
+/**
+ * Firestore PainEntry dokümanı
+ */
+data class FirestorePainEntry(
+    @DocumentId val id: String = "",
+    val userId: String = "",
+    val sessionId: String? = null,
+    val painLevel: Int = 0, // 0-10 arası
+    val bodyPart: String = "",
+    val notes: String = "",
+    val mood: String = "", // GOOD, NEUTRAL, BAD
+    @ServerTimestamp val createdAt: Timestamp? = null
+)
 
 /**
  * Firestore Badge dokümanı

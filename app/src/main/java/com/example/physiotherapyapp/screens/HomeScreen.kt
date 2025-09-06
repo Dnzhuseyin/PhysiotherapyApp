@@ -90,14 +90,21 @@ fun HomeScreen(
                     
                     // Test butonu - Manuel seans oluştur
                     val coroutineScope = rememberCoroutineScope()
+                    var testClickCount by remember { mutableIntStateOf(0) }
+                    
                     Button(
                         onClick = {
+                            testClickCount++
+                            android.util.Log.d("HomeScreen", "🧪 BUTTON CLICKED! Count: $testClickCount")
+                            
                             coroutineScope.launch {
                                 try {
+                                    android.util.Log.d("HomeScreen", "🧪 Starting coroutine...")
+                                    
                                     // Test için manuel completed session oluştur
                                     val testSession = com.example.physiotherapyapp.data.Session(
-                                        templateId = "test-template",
-                                        templateName = "Test Seansı",
+                                        templateId = "test-template-${System.currentTimeMillis()}",
+                                        templateName = "Test Seansı #$testClickCount",
                                         exercises = listOf(
                                             com.example.physiotherapyapp.data.Exercise("Test Egzersiz 1", "Test açıklama"),
                                             com.example.physiotherapyapp.data.Exercise("Test Egzersiz 2", "Test açıklama")
@@ -109,22 +116,31 @@ fun HomeScreen(
                                         currentExerciseIndex = 2
                                     )
                                     
+                                    android.util.Log.d("HomeScreen", "🧪 Test session created: ${testSession.templateName}")
+                                    
                                     // Firebase'e kaydet
                                     val repository = com.example.physiotherapyapp.repository.FirebaseRepository()
+                                    android.util.Log.d("HomeScreen", "🧪 Calling saveCompletedSession...")
                                     val success = repository.saveCompletedSession(testSession)
                                     android.util.Log.d("HomeScreen", "🧪 Test session save result: $success")
                                     
                                     if (success) {
-                                        android.util.Log.d("HomeScreen", "🧪 Test session saved! Restart app to see changes.")
+                                        android.util.Log.d("HomeScreen", "🧪 SUCCESS! Test session saved! Restart app to see changes.")
+                                    } else {
+                                        android.util.Log.e("HomeScreen", "🧪 FAILED! Session save returned false")
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("HomeScreen", "🧪 Test session save error", e)
+                                    android.util.Log.e("HomeScreen", "🧪 EXCEPTION in test session save", e)
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
                     ) {
-                        Text("🧪 TEST SESSION OLUŞTUR")
+                        Text("🧪 TEST BUTONU (Tıklandı: $testClickCount)")
                     }
                 }
             }

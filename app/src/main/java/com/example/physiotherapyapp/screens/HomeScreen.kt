@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import com.example.physiotherapyapp.components.*
 import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
@@ -72,89 +71,6 @@ fun HomeScreen(
                     // Hoşgeldin kartı
                     WelcomeCard(user = user)
                     
-                    // Debug kartı (geçici)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = "🔧 DEBUG: Session History",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                    Text("Completed Sessions Count: ${completedSessions.size}")
-                    Text("Sessions: ${completedSessions.map { "${it.templateName} (${it.pointsEarned} pts)" }}")
-                    
-                    // Test butonu - Manuel seans oluştur
-                    val coroutineScope = rememberCoroutineScope()
-                    var testClickCount by remember { mutableIntStateOf(0) }
-                    var testResult by remember { mutableStateOf("Henüz test edilmedi") }
-                    
-                    Button(
-                        onClick = {
-                            testClickCount++
-                            android.util.Log.d("HomeScreen", "🧪 BUTTON CLICKED! Count: $testClickCount")
-                            
-                            testResult = "Test başlatılıyor..."
-                            
-                            coroutineScope.launch {
-                                try {
-                                    testResult = "Session oluşturuluyor..."
-                                    
-                                    // Test için manuel completed session oluştur
-                                    val testSession = com.example.physiotherapyapp.data.Session(
-                                        templateId = "test-template-${System.currentTimeMillis()}",
-                                        templateName = "Test Seansı #$testClickCount",
-                                        exercises = listOf(
-                                            com.example.physiotherapyapp.data.Exercise("Test Egzersiz 1", "Test açıklama"),
-                                            com.example.physiotherapyapp.data.Exercise("Test Egzersiz 2", "Test açıklama")
-                                        ),
-                                        startDate = java.util.Date(System.currentTimeMillis() - 3600000), // 1 saat önce
-                                        endDate = java.util.Date(),
-                                        isCompleted = true,
-                                        pointsEarned = 10,
-                                        currentExerciseIndex = 2
-                                    )
-                                    
-                                    testResult = "Firebase'e kaydediliyor..."
-                                    
-                                    // Firebase'e kaydet
-                                    val repository = com.example.physiotherapyapp.repository.FirebaseRepository()
-                                    val success = repository.saveCompletedSession(testSession)
-                                    
-                                    if (success) {
-                                        testResult = "✅ BAŞARILI! Session kaydedildi. App'i yeniden başlat."
-                                    } else {
-                                        testResult = "❌ BAŞARISIZ! Firebase save false döndü."
-                                    }
-                                } catch (e: Exception) {
-                                    testResult = "❌ HATA: ${e.message}"
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("🧪 TEST BUTONU (Tıklandı: $testClickCount)")
-                    }
-                    
-                    // Test sonucu göster
-                    Text(
-                        text = "Test Sonucu: $testResult",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (testResult.startsWith("✅")) MaterialTheme.colorScheme.primary 
-                               else if (testResult.startsWith("❌")) MaterialTheme.colorScheme.error
-                               else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
                     
                     // Hızlı istatistikler
                     QuickStatsRow(user = user)

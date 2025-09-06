@@ -96,8 +96,8 @@ data class FirestoreSession(
 data class FirestoreSessionExercise(
     val exerciseId: String = "",
     val exerciseName: String = "",
-    val isCompleted: Boolean = false,
-    @ServerTimestamp val completedAt: Timestamp? = null
+    val isCompleted: Boolean = false
+    // completedAt kaldırıldı - ServerTimestamp array içinde desteklenmiyor
 )
 
 /**

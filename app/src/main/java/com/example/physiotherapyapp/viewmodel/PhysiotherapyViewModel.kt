@@ -140,16 +140,31 @@ class PhysiotherapyViewModel(
                 } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No profile found")
                 
                 // Session template'leri yükle
-                val templates = firebaseRepository.getUserSessionTemplates()
-                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Templates loaded: ${templates.size}")
-                
-                // Template'leri sadece Firebase'den veri varsa güncelle, yoksa mevcut local template'leri koru
-                if (templates.isNotEmpty()) {
-                    _sessionTemplates.clear()
-                    _sessionTemplates.addAll(templates)
-                } else if (_sessionTemplates.isEmpty()) {
-                    // Sadece local template'ler de boşsa sample template'ler oluştur
-                    createSampleTemplates()
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: About to call getUserSessionTemplates")
+                try {
+                    val templates = firebaseRepository.getUserSessionTemplates()
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Templates loaded: ${templates.size}")
+                    
+                    // Template'leri sadece Firebase'den veri varsa güncelle, yoksa mevcut local template'leri koru
+                    if (templates.isNotEmpty()) {
+                        _sessionTemplates.clear()
+                        _sessionTemplates.addAll(templates)
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Local templates updated: ${_sessionTemplates.size}")
+                    } else if (_sessionTemplates.isEmpty()) {
+                        // Sadece local template'ler de boşsa sample template'ler oluştur
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: No templates found, creating sample templates")
+                        createSampleTemplates()
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Sample templates created: ${_sessionTemplates.size}")
+                    } else {
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Using existing local templates: ${_sessionTemplates.size}")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("PhysiotherapyViewModel", "loadDataFromFirebase: Error loading session templates", e)
+                    // Hata durumunda sample template'ler oluştur
+                    if (_sessionTemplates.isEmpty()) {
+                        createSampleTemplates()
+                        android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Created sample templates after error: ${_sessionTemplates.size}")
+                    }
                 }
                 
                 // Tamamlanan seansları yükle

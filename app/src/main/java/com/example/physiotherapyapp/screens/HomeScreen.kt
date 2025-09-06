@@ -91,15 +91,18 @@ fun HomeScreen(
                     // Test butonu - Manuel seans oluştur
                     val coroutineScope = rememberCoroutineScope()
                     var testClickCount by remember { mutableIntStateOf(0) }
+                    var testResult by remember { mutableStateOf("Henüz test edilmedi") }
                     
                     Button(
                         onClick = {
                             testClickCount++
                             android.util.Log.d("HomeScreen", "🧪 BUTTON CLICKED! Count: $testClickCount")
                             
+                            testResult = "Test başlatılıyor..."
+                            
                             coroutineScope.launch {
                                 try {
-                                    android.util.Log.d("HomeScreen", "🧪 Starting coroutine...")
+                                    testResult = "Session oluşturuluyor..."
                                     
                                     // Test için manuel completed session oluştur
                                     val testSession = com.example.physiotherapyapp.data.Session(
@@ -116,21 +119,19 @@ fun HomeScreen(
                                         currentExerciseIndex = 2
                                     )
                                     
-                                    android.util.Log.d("HomeScreen", "🧪 Test session created: ${testSession.templateName}")
+                                    testResult = "Firebase'e kaydediliyor..."
                                     
                                     // Firebase'e kaydet
                                     val repository = com.example.physiotherapyapp.repository.FirebaseRepository()
-                                    android.util.Log.d("HomeScreen", "🧪 Calling saveCompletedSession...")
                                     val success = repository.saveCompletedSession(testSession)
-                                    android.util.Log.d("HomeScreen", "🧪 Test session save result: $success")
                                     
                                     if (success) {
-                                        android.util.Log.d("HomeScreen", "🧪 SUCCESS! Test session saved! Restart app to see changes.")
+                                        testResult = "✅ BAŞARILI! Session kaydedildi. App'i yeniden başlat."
                                     } else {
-                                        android.util.Log.e("HomeScreen", "🧪 FAILED! Session save returned false")
+                                        testResult = "❌ BAŞARISIZ! Firebase save false döndü."
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("HomeScreen", "🧪 EXCEPTION in test session save", e)
+                                    testResult = "❌ HATA: ${e.message}"
                                 }
                             }
                         },
@@ -142,6 +143,16 @@ fun HomeScreen(
                     ) {
                         Text("🧪 TEST BUTONU (Tıklandı: $testClickCount)")
                     }
+                    
+                    // Test sonucu göster
+                    Text(
+                        text = "Test Sonucu: $testResult",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (testResult.startsWith("✅")) MaterialTheme.colorScheme.primary 
+                               else if (testResult.startsWith("❌")) MaterialTheme.colorScheme.error
+                               else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
                     

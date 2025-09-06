@@ -56,6 +56,30 @@ fun WorkoutScreen(
             )
         }
     ) { paddingValues ->
+        // Debug bilgisi
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🔧 DEBUG: Workout Screen",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text("Total Templates: ${sessionTemplates.size}")
+                Text("AI Templates: ${sessionTemplates.count { it.isAIGenerated }}")
+                Text("Manual Templates: ${sessionTemplates.count { !it.isAIGenerated }}")
+                sessionTemplates.forEach { template ->
+                    Text("- ${template.name} (AI: ${template.isAIGenerated})")
+                }
+            }
+        }
+        
         if (sessionTemplates.isEmpty()) {
             EmptyWorkoutScreen(onCreateNewSession = onCreateNewSession)
         } else {

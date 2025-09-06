@@ -118,46 +118,7 @@ class FirebaseRepository {
         }
     }
     
-    // SESSION TEMPLATE OPERATIONS
-    
-    /**
-     * Session template kaydet
-     */
-    suspend fun saveSessionTemplate(template: SessionTemplate): Boolean {
-        // Temporarily disabled - conversion issues
-        android.util.Log.w("FirebaseRepo", "saveSessionTemplate: Temporarily disabled")
-        return false
-    }
-    
-    /**
-     * Kullanıcının session template'lerini getir
-     */
-    suspend fun getUserSessionTemplates(): List<SessionTemplate> {
-        return try {
-            val userId = currentUserId ?: return emptyList()
-            sessionTemplatesCollection()
-                .whereEqualTo("userId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .await()
-                .toObjects(FirestoreSessionTemplate::class.java)
-                .map { firestoreTemplate ->
-                    // Firestore'dan local model'e dönüştür
-                    SessionTemplate(
-                        id = firestoreTemplate.id,
-                        name = firestoreTemplate.name,
-                        exercises = firestoreTemplate.exercises.map { exerciseName ->
-                            Exercise(name = exerciseName, description = "")
-                        },
-                        estimatedDuration = firestoreTemplate.estimatedDuration,
-                        createdDate = firestoreTemplate.createdAt?.toDate() ?: java.util.Date()
-                    )
-                }
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Template'ler getirme hatası", e)
-            emptyList()
-        }
-    }
+    // SESSION TEMPLATE OPERATIONS moved to end of file
     
     /**
      * Session template sil
@@ -545,6 +506,67 @@ class FirebaseRepository {
         } catch (e: Exception) {
             android.util.Log.e("FirebaseRepo", "Progress report kaydetme hatası", e)
             false
+        }
+    }
+    
+    // SESSION TEMPLATE OPERATIONS
+    
+    /**
+     * Seans şablonu kaydet
+     */
+    suspend fun saveSessionTemplate(template: SessionTemplate): Boolean {
+        return try {
+            val userId = currentUserId ?: run {
+                android.util.Log.w("FirebaseRepo", "saveSessionTemplate: currentUserId is null")
+                return false
+            }
+            
+            android.util.Log.d("FirebaseRepo", "saveSessionTemplate: Saving template for userId: $userId")
+            
+            val firestoreTemplate = template.toFirestore().copy(userId = userId)
+            
+            sessionTemplatesCollection()
+                .document(template.id)
+                .set(firestoreTemplate)
+                .await()
+                
+            android.util.Log.d("FirebaseRepo", "saveSessionTemplate: Template saved successfully")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseRepo", "Seans şablonu kaydetme hatası", e)
+            false
+        }
+    }
+    
+    /**
+     * Kullanıcının seans şablonlarını getir
+     */
+    suspend fun getUserSessionTemplates(): List<SessionTemplate> {
+        return try {
+            val userId = currentUserId ?: return emptyList()
+            android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: userId=$userId")
+            
+            val query = sessionTemplatesCollection()
+                .whereEqualTo("userId", userId)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+            
+            android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: Query created")
+            
+            val snapshot = query.get().await()
+            android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: Query executed, documents=${snapshot.size()}")
+            
+            val firestoreTemplates = snapshot.toObjects(FirestoreSessionTemplate::class.java)
+            android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: FirestoreTemplates converted: ${firestoreTemplates.size}")
+            
+            val templates = firestoreTemplates.map { firestoreTemplate ->
+                firestoreTemplate.toLocal()
+            }
+            
+            android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: Final templates count: ${templates.size}")
+            templates
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseRepo", "Seans şablonları getirme hatası", e)
+            emptyList()
         }
     }
 }

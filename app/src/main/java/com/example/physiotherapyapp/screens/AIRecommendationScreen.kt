@@ -734,6 +734,6 @@ private fun AISessionRecommendation.toSessionTemplate(): SessionTemplate {
         name = this.sessionName,
         exercises = exerciseList,
         createdDate = Date(),
-        estimatedDuration = this.estimatedDuration
+        estimatedDuration = this.estimatedDuration.toIntOrNull() ?: exercises.size * 5
     )
 }

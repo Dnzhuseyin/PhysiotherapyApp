@@ -71,19 +71,7 @@ data class FirestoreExercise(
     @ServerTimestamp val createdAt: Timestamp? = null
 )
 
-/**
- * Firestore SessionTemplate dokümanı
- */
-data class FirestoreSessionTemplate(
-    @DocumentId val id: String = "",
-    val userId: String = "",
-    val name: String = "",
-    val exercises: List<String> = emptyList(), // Exercise ID'leri
-    val estimatedDuration: String = "",
-    val isAIGenerated: Boolean = false,
-    val aiConfidence: Float = 0f,
-    @ServerTimestamp val createdAt: Timestamp? = null
-)
+// FirestoreSessionTemplate moved to line 118
 
 /**
  * Firestore Session dokümanı (tamamlanan seanslar)
@@ -112,6 +100,19 @@ data class FirestoreSessionExercise(
     @ServerTimestamp val completedAt: Timestamp? = null
 )
 
+/**
+ * Firestore SessionTemplate dokümanı
+ */
+data class FirestoreSessionTemplate(
+    @DocumentId val id: String = "",
+    val userId: String = "",
+    val name: String = "",
+    val exercises: List<String> = emptyList(), // Exercise name listesi
+    val estimatedDuration: Int = 0, // dakika
+    val isAIGenerated: Boolean = false,
+    @ServerTimestamp val createdAt: Timestamp? = null,
+    @ServerTimestamp val updatedAt: Timestamp? = null
+)
 
 /**
  * Firestore Badge dokümanı
@@ -237,16 +238,7 @@ fun FirestoreUserProfile.toLocal(): UserProfile {
     )
 }
 
-// SessionTemplate dönüşümleri
-fun SessionTemplate.toFirestore(userId: String): FirestoreSessionTemplate {
-    return FirestoreSessionTemplate(
-        userId = userId,
-        name = name,
-        exercises = exercises.map { it.name }, // Exercise name'leri
-        estimatedDuration = estimatedDuration,
-        isAIGenerated = false
-    )
-}
+// SessionTemplate dönüşümleri (moved to end of file)
 
 // PainEntry dönüşümleri
 fun painEntryToFirestore(painEntry: PainEntry, userId: String): FirestorePainEntry {
@@ -267,5 +259,29 @@ fun FirestorePainEntry.toLocal(): PainEntry {
         bodyPart = bodyPart,
         notes = notes,
         date = createdAt?.toDate() ?: Date()
+    )
+}
+
+// SessionTemplate dönüşümleri
+fun SessionTemplate.toFirestore(): FirestoreSessionTemplate {
+    return FirestoreSessionTemplate(
+        id = id,
+        name = name,
+        exercises = exercises.map { it.name },
+        estimatedDuration = estimatedDuration,
+        isAIGenerated = isAIGenerated
+    )
+}
+
+fun FirestoreSessionTemplate.toLocal(): SessionTemplate {
+    return SessionTemplate(
+        id = id,
+        name = name,
+        exercises = exercises.map { exerciseName ->
+            Exercise(name = exerciseName, description = "")
+        },
+        estimatedDuration = estimatedDuration,
+        isAIGenerated = isAIGenerated,
+        createdDate = createdAt?.toDate() ?: java.util.Date()
     )
 }

@@ -277,13 +277,14 @@ private fun SessionTemplateCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                InfoChip(
-                    icon = Icons.Default.FitnessCenter,
-                    text = "${template.exercises.size} egzersiz"
+                // InfoChip'ler geçici olarak devre dışı - private access error
+                Text(
+                    text = "🏃‍♂️ ${template.exercises.size} egzersiz",
+                    style = MaterialTheme.typography.bodySmall
                 )
-                InfoChip(
-                    icon = Icons.Default.Schedule,
-                    text = template.estimatedDuration
+                Text(
+                    text = "⏱️ ${template.estimatedDuration} dk",
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             

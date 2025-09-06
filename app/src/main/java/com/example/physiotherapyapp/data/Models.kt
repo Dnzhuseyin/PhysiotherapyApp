@@ -21,7 +21,8 @@ data class SessionTemplate(
     val name: String,
     val exercises: List<Exercise>,
     val createdDate: Date = Date(),
-    val estimatedDuration: String = "${exercises.size * 5} dk" // Her egzersiz için 5 dk tahmin
+    val estimatedDuration: Int = exercises.size * 5, // dakika cinsinden
+    val isAIGenerated: Boolean = false
 )
 
 /**

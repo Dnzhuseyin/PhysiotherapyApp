@@ -73,6 +73,29 @@ fun AnalyticsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Debug bilgisi
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "🔧 DEBUG: Analytics Screen",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text("Completed Sessions: ${completedSessions.size}")
+                    Text("Pain Entries: ${painEntries.size}")
+                    Text("User Total Sessions: ${user.totalSessions}")
+                    Text("User Total Points: ${user.totalPoints}")
+                    Text("Daily Progress Sessions: ${dailyProgress.sessionsCompleted}")
+                    Text("Daily Progress Points: ${dailyProgress.pointsEarned}")
+                }
+            }
             // Tab Row
             TabRow(
                 selectedTabIndex = selectedTab,

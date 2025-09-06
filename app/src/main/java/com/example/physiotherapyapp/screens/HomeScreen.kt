@@ -432,7 +432,7 @@ private fun RecentSessionCard(
             )
             
             Text(
-                text = template.estimatedDuration,
+                text = "${template.estimatedDuration} dk",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

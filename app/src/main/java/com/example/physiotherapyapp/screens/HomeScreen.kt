@@ -30,6 +30,9 @@ import com.example.physiotherapyapp.data.SessionTemplate
 import com.example.physiotherapyapp.data.User
 import com.example.physiotherapyapp.navigation.NavigationRoutes
 import com.example.physiotherapyapp.ui.theme.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * Ana ekran - dashboard görünümü
@@ -582,6 +585,81 @@ private fun DebugCard(user: User) {
                 text = "Local User Sessions: ${user.totalSessions}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Firebase Test Butonu
+            var testResult by remember { mutableStateOf("Henüz test yapılmadı") }
+            val scope = rememberCoroutineScope()
+            
+            Button(
+                onClick = {
+                    testResult = "Test pain entry ekleniyor..."
+                    // Test pain entry ekle
+                    val testEntry = com.example.physiotherapyapp.data.PainEntry(
+                        sessionId = "test_session_${System.currentTimeMillis()}",
+                        painLevel = 5,
+                        bodyPart = "Test Bölgesi",
+                        notes = "DEBUG TEST ENTRY - ${java.util.Date()}"
+                    )
+                    
+                    scope.launch {
+                        try {
+                            val repo = com.example.physiotherapyapp.repository.FirebaseRepository()
+                            val result = repo.savePainEntry(testEntry)
+                            testResult = "Firebase save result: $result"
+                            android.util.Log.d("DebugCard", "🧪 Test pain entry save result: $result")
+                        } catch (e: Exception) {
+                            testResult = "ERROR: ${e.message}"
+                            android.util.Log.e("DebugCard", "🚨 Test pain entry save error", e)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("🧪 TEST FIREBASE SAVE")
+            }
+            
+            Text(
+                text = testResult,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (testResult.contains("true")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Firebase Load Test Butonu
+            var loadResult by remember { mutableStateOf("Henüz load test yapılmadı") }
+            
+            Button(
+                onClick = {
+                    loadResult = "Test pain entries yükleniyor..."
+                    
+                    scope.launch {
+                        try {
+                            val repo = com.example.physiotherapyapp.repository.FirebaseRepository()
+                            val painEntries = repo.getUserPainEntries()
+                            val badges = repo.getUserBadges()
+                            loadResult = "Loaded: ${painEntries.size} pain entries, ${badges.size} badges"
+                            android.util.Log.d("DebugCard", "🔍 Load test - Pain entries: ${painEntries.size}, Badges: ${badges.size}")
+                        } catch (e: Exception) {
+                            loadResult = "LOAD ERROR: ${e.message}"
+                            android.util.Log.e("DebugCard", "🚨 Load test error", e)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            ) {
+                Text("🔍 TEST FIREBASE LOAD")
+            }
+            
+            Text(
+                text = loadResult,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }

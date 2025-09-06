@@ -108,7 +108,7 @@ data class FirestoreSessionTemplate(
     val userId: String = "",
     val name: String = "",
     val exercises: List<String> = emptyList(), // Exercise name listesi
-    val estimatedDuration: Int = 0, // dakika
+    val estimatedDuration: Any? = null, // Changed to Any? to handle String or Int from Firestore
     val isAIGenerated: Boolean = false,
     @ServerTimestamp val createdAt: Timestamp? = null,
     @ServerTimestamp val updatedAt: Timestamp? = null
@@ -280,7 +280,7 @@ fun FirestoreSessionTemplate.toLocal(): SessionTemplate {
         exercises = exercises.map { exerciseName ->
             Exercise(name = exerciseName, description = "")
         },
-        estimatedDuration = estimatedDuration,
+        estimatedDuration = (estimatedDuration as? Long)?.toInt() ?: (estimatedDuration as? String)?.toIntOrNull() ?: 0, // Safely convert
         isAIGenerated = isAIGenerated,
         createdDate = createdAt?.toDate() ?: java.util.Date()
     )

@@ -16,6 +16,7 @@ data class FirestoreUser(
     @DocumentId val uid: String = "",
     val email: String = "",
     val displayName: String = "",
+    val name: String = "",
     val totalSessions: Int = 0,
     val totalPoints: Int = 0,
     val currentLevel: Int = 1,
@@ -23,6 +24,7 @@ data class FirestoreUser(
     val profileCompleted: Boolean = false,
     @ServerTimestamp val createdAt: Timestamp? = null,
     @ServerTimestamp val updatedAt: Timestamp? = null
+    // Note: completedSessions, painEntries ayrı koleksiyonlarda tutulacak
 )
 
 /**
@@ -187,6 +189,7 @@ data class FirestoreAIRecommendation(
 fun User.toFirestore(uid: String): FirestoreUser {
     return FirestoreUser(
         uid = uid,
+        name = name,
         displayName = name,
         totalSessions = totalSessions,
         totalPoints = totalPoints,
@@ -198,7 +201,7 @@ fun User.toFirestore(uid: String): FirestoreUser {
 
 fun FirestoreUser.toLocal(): User {
     return User(
-        name = displayName,
+        name = if (name.isNotEmpty()) name else displayName,
         totalSessions = totalSessions,
         totalPoints = totalPoints,
         currentLevel = currentLevel,

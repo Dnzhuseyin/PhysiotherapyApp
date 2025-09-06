@@ -137,11 +137,13 @@ class PhysiotherapyViewModel(
                 // Session template'leri yükle
                 val templates = firebaseRepository.getUserSessionTemplates()
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Templates loaded: ${templates.size}")
+                
+                // Template'leri sadece Firebase'den veri varsa güncelle, yoksa mevcut local template'leri koru
                 if (templates.isNotEmpty()) {
                     _sessionTemplates.clear()
                     _sessionTemplates.addAll(templates)
-                } else {
-                    // Yeni kullanıcı için sample template'ler oluştur
+                } else if (_sessionTemplates.isEmpty()) {
+                    // Sadece local template'ler de boşsa sample template'ler oluştur
                     createSampleTemplates()
                 }
                 
@@ -150,12 +152,20 @@ class PhysiotherapyViewModel(
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Sessions loaded: ${completedSessions.size}")
                 _user.value = _user.value.copy(completedSessions = completedSessions)
                 
+                // Local completedSessions listesini de güncelle
+                _completedSessions.clear()
+                _completedSessions.addAll(completedSessions)
+                
                 // Ağrı kayıtlarını yükle
                 val painEntries = firebaseRepository.getUserPainEntries()
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Pain entries loaded: ${painEntries.size}")
                 _user.value = _user.value.copy(painEntries = painEntries)
-                _painEntries.clear()
-                _painEntries.addAll(painEntries)
+                
+                // Local painEntries listesini sadece Firebase'den veri varsa güncelle
+                if (painEntries.isNotEmpty() || _painEntries.isEmpty()) {
+                    _painEntries.clear()
+                    _painEntries.addAll(painEntries)
+                }
                 
                 // Rozetleri yükle
                 val badges = firebaseRepository.getUserBadges()
@@ -165,8 +175,12 @@ class PhysiotherapyViewModel(
                 // Hatırlatıcıları yükle
                 val reminders = firebaseRepository.getUserReminders()
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Reminders loaded: ${reminders.size}")
-                _reminders.clear()
-                _reminders.addAll(reminders)
+                
+                // Local reminders listesini sadece Firebase'den veri varsa güncelle
+                if (reminders.isNotEmpty() || _reminders.isEmpty()) {
+                    _reminders.clear()
+                    _reminders.addAll(reminders)
+                }
                 
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Data load completed successfully")
                 
@@ -181,9 +195,13 @@ class PhysiotherapyViewModel(
      */
     private suspend fun createInitialUserData() {
         try {
+            // Firebase Auth'dan kullanıcı bilgilerini al
+            val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+            val currentUser = auth.currentUser
+            
             // Varsayılan kullanıcı bilgileri oluştur
             val defaultUser = User(
-                name = "Kullanıcı",
+                name = currentUser?.displayName ?: currentUser?.email?.substringBefore("@") ?: "Kullanıcı",
                 totalSessions = 0,
                 totalPoints = 0,
                 completedSessions = emptyList(),
@@ -198,7 +216,7 @@ class PhysiotherapyViewModel(
             // Firebase'e kaydet
             firebaseRepository.updateUser(defaultUser)
             
-            android.util.Log.d("PhysiotherapyViewModel", "Initial user data created and saved to Firebase")
+            android.util.Log.d("PhysiotherapyViewModel", "Initial user data created and saved to Firebase: ${defaultUser.name}")
             
         } catch (e: Exception) {
             android.util.Log.e("PhysiotherapyViewModel", "Error creating initial user data", e)

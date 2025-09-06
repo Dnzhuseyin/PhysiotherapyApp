@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Calendar
 import java.util.Date
 
 /**
@@ -524,25 +525,6 @@ class PhysiotherapyViewModel(
         syncUserToFirebase()
     }
     
-    /**
-     * Günlük ilerleme verisi döndürür
-     */
-    fun getDailyProgress(): DailyProgress {
-        val today = Date()
-        val todaySessions = _user.value.completedSessions.filter { 
-            isSameDay(it.startDate, today)
-        }
-        
-        return DailyProgress(
-            date = today,
-            sessionsCompleted = todaySessions.size,
-            pointsEarned = todaySessions.sumOf { it.pointsEarned },
-            avgPainLevel = _painEntries.filter { isSameDay(it.date, today) }
-                .takeIf { it.isNotEmpty() }
-                ?.map { it.painLevel }
-                ?.average() ?: 0.0
-        )
-    }
     
     /**
      * Haftalık ilerleme verisi döndürür
@@ -722,6 +704,48 @@ class PhysiotherapyViewModel(
         return report
     }
     
+    /**
+     * Günlük ilerleme verilerini getir
+     */
+    fun getDailyProgress(): DailyProgress {
+        val today = Calendar.getInstance()
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        today.set(Calendar.SECOND, 0)
+        today.set(Calendar.MILLISECOND, 0)
+        val todayStart = today.time
+        
+        val tomorrow = Calendar.getInstance()
+        tomorrow.time = todayStart
+        tomorrow.add(Calendar.DAY_OF_MONTH, 1)
+        val tomorrowStart = tomorrow.time
+        
+        // Bugünkü seanslar
+        val todaySessions = _completedSessions.filter { session ->
+            session.endDate != null && session.endDate >= todayStart && session.endDate < tomorrowStart
+        }
+        
+        // Bugünkü ağrı kayıtları
+        val todayPainEntries = _painEntries.filter { entry ->
+            entry.date >= todayStart && entry.date < tomorrowStart
+        }
+        
+        // Hedefler (örnek değerler)
+        val sessionTarget = 3
+        val pointTarget = 30
+        
+        return DailyProgress(
+            date = todayStart,
+            sessionsCompleted = todaySessions.size,
+            pointsEarned = todaySessions.sumOf { it.pointsEarned },
+            painEntries = todayPainEntries.size,
+            sessionTarget = sessionTarget,
+            pointTarget = pointTarget,
+            sessionProgress = if (sessionTarget > 0) todaySessions.size.toFloat() / sessionTarget else 0f,
+            pointProgress = if (pointTarget > 0) todaySessions.sumOf { it.pointsEarned }.toFloat() / pointTarget else 0f
+        )
+    }
+    
     override fun onCleared() {
         super.onCleared()
         // Firebase connections otomatik temizlenir
@@ -735,12 +759,9 @@ data class DailyProgress(
     val date: Date,
     val sessionsCompleted: Int,
     val pointsEarned: Int,
-    val avgPainLevel: Double,
-    val sessionTarget: Int = 1,
-    val pointTarget: Int = 10
-) {
-    val sessionProgress: Float
-        get() = if (sessionTarget > 0) sessionsCompleted.toFloat() / sessionTarget else 0f
+    val painEntries: Int,
+    val sessionTarget: Int,
+    val pointTarget: Int,
+    val sessionProgress: Float,
     val pointProgress: Float
-        get() = if (pointTarget > 0) pointsEarned.toFloat() / pointTarget else 0f
-}
+)

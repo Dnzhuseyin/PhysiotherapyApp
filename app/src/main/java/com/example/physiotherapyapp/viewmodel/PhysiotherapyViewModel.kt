@@ -139,6 +139,8 @@ class PhysiotherapyViewModel(
                     _userProfile.value = profile
                 } ?: android.util.Log.w("PhysiotherapyViewModel", "loadDataFromFirebase: No profile found")
                 
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** BEFORE SESSION TEMPLATES ***")
+                
                 // Session template'leri yükle
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: About to call getUserSessionTemplates")
                 try {
@@ -166,6 +168,8 @@ class PhysiotherapyViewModel(
                         android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Created sample templates after error: ${_sessionTemplates.size}")
                     }
                 }
+                
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: *** AFTER SESSION TEMPLATES ***")
                 
                 // Tamamlanan seansları yükle
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: About to call getUserCompletedSessions")

@@ -186,10 +186,15 @@ class FirebaseRepository {
             val userId = currentUserId ?: return emptyList()
             android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: userId=$userId")
             
+            // Test: Önce tüm sessions'ları getir
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Testing - Getting ALL sessions first")
+            val allSessionsSnapshot = sessionsCollection().get().await()
+            android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Total sessions in database: ${allSessionsSnapshot.size()}")
+            
             val query = sessionsCollection()
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("status", "COMPLETED")
-                .orderBy("completedAt", Query.Direction.DESCENDING)
+                // orderBy geçici olarak kaldırıldı - Firestore index sorunu olabilir
             
             android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Query created")
             android.util.Log.d("FirebaseRepository", "getUserCompletedSessions: Searching for userId='$userId', status='COMPLETED'")

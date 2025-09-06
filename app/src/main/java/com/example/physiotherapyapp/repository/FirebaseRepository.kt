@@ -327,35 +327,7 @@ class FirebaseRepository {
         }
     }
     
-    // BADGE OPERATIONS
-    
-    /**
-     * Kullanıcı rozetlerini getir
-     */
-    suspend fun getUserBadges(): List<Badge> {
-        return try {
-            val userId = currentUserId ?: return emptyList()
-            badgesCollection()
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isUnlocked", true)
-                .get()
-                .await()
-                .toObjects(FirestoreBadge::class.java)
-                .map { firestoreBadge ->
-                    Badge(
-                        id = firestoreBadge.id,
-                        name = firestoreBadge.name,
-                        description = firestoreBadge.description,
-                        iconName = firestoreBadge.iconName,
-                        category = BadgeCategory.valueOf(firestoreBadge.badgeType),
-                        unlockedDate = firestoreBadge.unlockedAt?.toDate() ?: java.util.Date()
-                    )
-                }
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Rozetler getirme hatası", e)
-            emptyList()
-        }
-    }
+    // Eski badge operations kaldırıldı - aşağıda yeni versiyonlar var
     
     /**
      * Rozet kaydet
@@ -381,34 +353,7 @@ class FirebaseRepository {
         }
     }
     
-    // REMINDER OPERATIONS
-    
-    /**
-     * Hatırlatıcıları getir
-     */
-    suspend fun getUserReminders(): List<ReminderNotification> {
-        return try {
-            val userId = currentUserId ?: return emptyList()
-            remindersCollection()
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-                .toObjects(FirestoreReminder::class.java)
-                .map { firestoreReminder ->
-                    ReminderNotification(
-                        id = firestoreReminder.id,
-                        title = firestoreReminder.title,
-                        message = firestoreReminder.message,
-                        time = firestoreReminder.time,
-                        daysOfWeek = firestoreReminder.daysOfWeek,
-                        isEnabled = firestoreReminder.isEnabled
-                    )
-                }
-        } catch (e: Exception) {
-            android.util.Log.e("FirebaseRepo", "Hatırlatıcılar getirme hatası", e)
-            emptyList()
-        }
-    }
+    // Eski reminder operations kaldırıldı - aşağıda yeni versiyonlar var
     
     /**
      * AI önerisi kaydet
@@ -458,6 +403,69 @@ class FirebaseRepository {
         } catch (e: Exception) {
             android.util.Log.e("FirebaseRepo", "User flow hatası", e)
             emit(null)
+        }
+    }
+    
+    // BADGE OPERATIONS
+    
+    /**
+     * Kullanıcının rozetlerini getir
+     */
+    suspend fun getUserBadges(): List<Badge> {
+        return try {
+            val userId = currentUserId ?: return emptyList()
+            badgesCollection()
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isUnlocked", true)
+                .get()
+                .await()
+                .documents
+                .map { document ->
+                    Badge(
+                        id = document.id,
+                        name = document.getString("name") ?: "",
+                        description = document.getString("description") ?: "",
+                        iconName = document.getString("iconName") ?: "",
+                        category = try {
+                            BadgeCategory.valueOf(document.getString("badgeType") ?: "SESSIONS")
+                        } catch (e: Exception) {
+                            BadgeCategory.SESSIONS
+                        },
+                        unlockedDate = document.getTimestamp("unlockedAt")?.toDate() ?: java.util.Date()
+                    )
+                }
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseRepo", "Rozetler getirme hatası", e)
+            emptyList()
+        }
+    }
+    
+    // REMINDERS OPERATIONS
+    
+    /**
+     * Kullanıcının hatırlatıcılarını getir
+     */
+    suspend fun getUserReminders(): List<ReminderNotification> {
+        return try {
+            val userId = currentUserId ?: return emptyList()
+            remindersCollection()
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                .documents
+                .map { document ->
+                    ReminderNotification(
+                        id = document.id,
+                        title = document.getString("title") ?: "",
+                        message = document.getString("message") ?: "",
+                        time = document.getString("time") ?: "",
+                        daysOfWeek = (document.get("daysOfWeek") as? List<Long>)?.map { it.toInt() } ?: emptyList(),
+                        isEnabled = document.getBoolean("isEnabled") ?: true
+                    )
+                }
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseRepo", "Hatırlatıcılar getirme hatası", e)
+            emptyList()
         }
     }
     

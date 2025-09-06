@@ -159,18 +159,27 @@ class PhysiotherapyViewModel(
                 // Ağrı kayıtlarını yükle
                 val painEntries = firebaseRepository.getUserPainEntries()
                 android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Pain entries loaded: ${painEntries.size}")
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Current local pain entries: ${_painEntries.size}")
+                
                 _user.value = _user.value.copy(painEntries = painEntries)
                 
                 // Local painEntries listesini sadece Firebase'den veri varsa güncelle
                 if (painEntries.isNotEmpty() || _painEntries.isEmpty()) {
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Updating local pain entries list")
                     _painEntries.clear()
                     _painEntries.addAll(painEntries)
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Local pain entries after update: ${_painEntries.size}")
+                } else {
+                    android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Keeping existing local pain entries")
                 }
                 
                 // Rozetleri yükle
                 val badges = firebaseRepository.getUserBadges()
-                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Badges loaded: ${badges.size}")
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Badges loaded from Firebase: ${badges.size}")
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: Current user badges: ${_user.value.badges.size}")
+                
                 _user.value = _user.value.copy(badges = badges)
+                android.util.Log.d("PhysiotherapyViewModel", "loadDataFromFirebase: User badges after update: ${_user.value.badges.size}")
                 
                 // Hatırlatıcıları yükle
                 val reminders = firebaseRepository.getUserReminders()

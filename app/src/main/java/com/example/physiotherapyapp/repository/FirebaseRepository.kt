@@ -571,7 +571,7 @@ class FirebaseRepository {
             
             val query = sessionTemplatesCollection()
                 .whereEqualTo("userId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+                // orderBy kaldırıldı - Firestore index sorunu
             
             android.util.Log.d("FirebaseRepository", "getUserSessionTemplates: Query created")
             
